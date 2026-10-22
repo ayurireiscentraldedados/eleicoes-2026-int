@@ -1125,581 +1125,729 @@ def index_page():
 # ==========================================
 # INTERFACE WEB (MOBILE & DESKTOP - MODERNA)
 # ==========================================
-HTML_INTERFACE = """
-<!DOCTYPE html>
+HTML_INTERFACE = """<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Apurador 2º Turno 2026 | Controle Remoto</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Central de Dados O POVO+ | Apuração Exterior 2º Turno 2026</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Roboto+Condensed:wght@400;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg-dark: #090D16;
-      --card-bg: rgba(22, 30, 49, 0.75);
-      --card-border: rgba(255, 255, 255, 0.08);
-      --text-main: #F1F5F9;
+      --bg-base: #080C14;
+      --bg-card: rgba(15, 23, 42, 0.75);
+      --bg-card-hover: rgba(30, 41, 59, 0.85);
+      --border-subtle: rgba(255, 255, 255, 0.08);
+      --border-highlight: rgba(229, 9, 20, 0.35);
+      --opovo-red: #E50914;
+      --opovo-red-glow: rgba(229, 9, 20, 0.25);
+      --text-main: #F8FAFC;
       --text-muted: #94A3B8;
-      --primary: #6366F1;
-      --primary-hover: #4F46E5;
+      --text-dim: #64748B;
       --lula-color: #EF4444;
       --flavio-color: #3B82F6;
-      --success: #10B981;
-      --warning: #F59E0B;
-      --danger: #EF4444;
-      --glow-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+      --emerald: #10B981;
+      --amber: #F59E0B;
+      --font-display: 'Outfit', sans-serif;
+      --font-condensed: 'Roboto Condensed', sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
     }
+
     * {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
-      -webkit-tap-highlight-color: transparent;
     }
+
     body {
-      background-color: var(--bg-dark);
-      background-image: radial-gradient(circle at 15% 15%, rgba(99, 102, 241, 0.15) 0%, transparent 40%),
-                        radial-gradient(circle at 85% 85%, rgba(16, 185, 129, 0.1) 0%, transparent 40%);
+      background-color: var(--bg-base);
+      background-image: 
+        radial-gradient(circle at 15% 15%, rgba(229, 9, 20, 0.08) 0%, transparent 40%),
+        radial-gradient(circle at 85% 85%, rgba(59, 130, 246, 0.05) 0%, transparent 45%);
       color: var(--text-main);
-      font-family: 'Outfit', sans-serif;
+      font-family: var(--font-display);
       min-height: 100vh;
-      padding: 16px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
+      padding: 24px 16px 40px;
+      line-height: 1.5;
     }
+
     .container {
-      width: 100%;
-      max-width: 900px;
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
+      max-width: 1180px;
+      margin: 0 auto;
     }
-    /* Header */
+
+    /* HEADER EDITORIAL O POVO+ */
     header {
-      background: var(--card-bg);
+      background: linear-gradient(135deg, rgba(20, 27, 45, 0.9) 0%, rgba(15, 23, 42, 0.95) 100%);
+      border: 1px solid var(--border-subtle);
+      border-top: 3px solid var(--opovo-red);
+      border-radius: 16px;
+      padding: 24px 28px;
+      margin-bottom: 24px;
       backdrop-filter: blur(16px);
-      border: 1px solid var(--card-border);
-      border-radius: 20px;
-      padding: 18px 24px;
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
       display: flex;
+      flex-wrap: wrap;
       justify-content: space-between;
       align-items: center;
-      box-shadow: var(--glow-shadow);
+      gap: 20px;
     }
-    .header-title h1 {
-      font-size: 1.35rem;
-      font-weight: 800;
-      letter-spacing: -0.5px;
+
+    .brand-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .brand-badge-bar {
       display: flex;
       align-items: center;
       gap: 10px;
     }
-    .header-title p {
+
+    .brand-logo-badge {
+      background: var(--opovo-red);
+      color: #FFFFFF;
+      font-family: var(--font-condensed);
+      font-weight: 800;
       font-size: 0.85rem;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      padding: 4px 10px;
+      border-radius: 6px;
+      box-shadow: 0 0 14px var(--opovo-red-glow);
+    }
+
+    .brand-subtag {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      font-size: 1.75rem;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      color: #FFFFFF;
+      margin-top: 2px;
+    }
+
+    .header-desc {
+      font-size: 0.92rem;
+      color: var(--text-muted);
+    }
+
+    .live-status-pill {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(16, 185, 129, 0.1);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      padding: 8px 16px;
+      border-radius: 30px;
+    }
+
+    .pulse-dot {
+      width: 10px;
+      height: 10px;
+      background: var(--emerald);
+      border-radius: 50%;
+      box-shadow: 0 0 10px var(--emerald);
+      animation: pulse 1.8s infinite;
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(0.95); opacity: 0.8; }
+      50% { transform: scale(1.25); opacity: 1; filter: drop-shadow(0 0 6px var(--emerald)); }
+      100% { transform: scale(0.95); opacity: 0.8; }
+    }
+
+    /* METRIC BANNER STATS */
+    .metrics-strip {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 14px;
+      margin-bottom: 24px;
+    }
+
+    .metric-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: 12px;
+      padding: 16px 18px;
+      backdrop-filter: blur(12px);
+      transition: transform 0.2s, border-color 0.2s;
+    }
+
+    .metric-card:hover {
+      transform: translateY(-2px);
+      border-color: rgba(255, 255, 255, 0.16);
+    }
+
+    .metric-card .label {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-dim);
+      font-weight: 600;
+    }
+
+    .metric-card .value {
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: #FFFFFF;
+      margin-top: 4px;
+      font-family: var(--font-condensed);
+    }
+
+    .metric-card .sub {
+      font-size: 0.75rem;
       color: var(--text-muted);
       margin-top: 2px;
     }
-    .status-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 6px 14px;
-      border-radius: 999px;
-      font-size: 0.82rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      background: rgba(148, 163, 184, 0.15);
-      border: 1px solid rgba(148, 163, 184, 0.3);
-    }
-    .badge-dot {
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      background: #94A3B8;
-    }
-    .status-badge.rodando {
-      background: rgba(16, 185, 129, 0.2);
-      border-color: rgba(16, 185, 129, 0.5);
-      color: #34D399;
-    }
-    .status-badge.rodando .badge-dot {
-      background: #34D399;
-      box-shadow: 0 0 12px #34D399;
-      animation: pulse 1.5s infinite;
-    }
-    .status-badge.agendado {
-      background: rgba(245, 158, 11, 0.2);
-      border-color: rgba(245, 158, 11, 0.5);
-      color: #FBBF24;
-    }
-    .status-badge.agendado .badge-dot {
-      background: #FBBF24;
-    }
-    .status-badge.pausado {
-      background: rgba(239, 68, 68, 0.2);
-      border-color: rgba(239, 68, 68, 0.5);
-      color: #F87171;
-    }
-    @keyframes pulse {
-      0% { opacity: 0.4; transform: scale(0.9); }
-      50% { opacity: 1; transform: scale(1.2); }
-      100% { opacity: 0.4; transform: scale(0.9); }
-    }
-    /* Cards Layout */
-    .grid-2 {
+
+    /* GRIDS */
+    .main-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 16px;
+      gap: 20px;
+      margin-bottom: 24px;
     }
-    @media (max-width: 720px) {
-      .grid-2 {
+
+    @media (max-width: 860px) {
+      .main-grid {
         grid-template-columns: 1fr;
       }
     }
+
     .card {
-      background: var(--card-bg);
-      backdrop-filter: blur(16px);
-      border: 1px solid var(--card-border);
-      border-radius: 20px;
-      padding: 20px;
-      box-shadow: var(--glow-shadow);
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: 16px;
+      padding: 22px 24px;
+      backdrop-filter: blur(14px);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
       display: flex;
       flex-direction: column;
-      gap: 14px;
+      gap: 16px;
     }
+
     .card-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
+      border-bottom: 1px solid var(--border-subtle);
+      padding-bottom: 14px;
     }
-    .card-header h2 {
-      font-size: 1.05rem;
+
+    .card-title {
+      font-size: 1.1rem;
       font-weight: 700;
-      color: var(--text-main);
+      color: #FFFFFF;
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
-    /* Timer Display */
-    .timer-box {
-      background: rgba(0, 0, 0, 0.35);
-      border: 1px solid rgba(255, 255, 255, 0.05);
-      border-radius: 16px;
-      padding: 16px;
+
+    /* TIMER & STATUS CARD */
+    .timer-hero {
       text-align: center;
+      background: rgba(8, 12, 20, 0.6);
+      border: 1px solid var(--border-subtle);
+      border-radius: 12px;
+      padding: 20px 16px;
     }
-    .timer-digits {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 2.3rem;
-      font-weight: 800;
+
+    .timer-display {
+      font-family: var(--font-mono);
+      font-size: 2.5rem;
+      font-weight: 700;
+      color: #60A5FA;
+      text-shadow: 0 0 20px rgba(96, 165, 250, 0.35);
       letter-spacing: 2px;
-      color: #FBBF24;
     }
-    .timer-subtitle {
-      font-size: 0.8rem;
+
+    .timer-caption {
+      font-size: 0.82rem;
       color: var(--text-muted);
-      margin-top: 4px;
+      margin-top: 6px;
     }
-    /* Candidate Scoreboard */
-    .score-container {
+
+    .btn-row {
       display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-    .candidate-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 10px 14px;
-      background: rgba(0, 0, 0, 0.3);
-      border-radius: 12px;
-    }
-    .cand-info {
-      display: flex;
-      align-items: center;
       gap: 10px;
+      flex-wrap: wrap;
     }
-    .cand-badge {
-      width: 14px;
-      height: 14px;
-      border-radius: 4px;
-    }
-    .cand-name {
-      font-size: 0.95rem;
-      font-weight: 700;
-    }
-    .cand-votes {
-      text-align: right;
-    }
-    .cand-pct {
-      font-size: 1.15rem;
-      font-weight: 800;
-      font-family: 'JetBrains Mono', monospace;
-    }
-    .cand-abs {
-      font-size: 0.75rem;
-      color: var(--text-muted);
-    }
-    /* Comparison Bar */
-    .progress-bar-bg {
-      height: 14px;
-      background: rgba(255, 255, 255, 0.1);
-      border-radius: 8px;
-      overflow: hidden;
-      display: flex;
-    }
-    .bar-lula {
-      background: var(--lula-color);
-      width: 50%;
-      transition: width 0.6s ease;
-    }
-    .bar-flavio {
-      background: var(--flavio-color);
-      width: 50%;
-      transition: width 0.6s ease;
-    }
-    /* Stat Pills */
-    .stats-row {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 10px;
-    }
-    .stat-pill {
-      background: rgba(0, 0, 0, 0.3);
-      border-radius: 12px;
-      padding: 10px;
-      text-align: center;
-    }
-    .stat-label {
-      font-size: 0.72rem;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      font-weight: 600;
-    }
-    .stat-val {
-      font-size: 1.05rem;
-      font-weight: 800;
-      margin-top: 2px;
-      font-family: 'JetBrains Mono', monospace;
-    }
-    /* Buttons */
+
     .btn {
-      padding: 12px 18px;
-      border-radius: 12px;
-      font-family: 'Outfit', sans-serif;
-      font-size: 0.92rem;
-      font-weight: 700;
+      flex: 1;
+      min-width: 130px;
+      padding: 11px 16px;
+      border-radius: 8px;
+      font-family: var(--font-display);
+      font-weight: 600;
+      font-size: 0.88rem;
       cursor: pointer;
-      border: none;
+      border: 1px solid transparent;
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 8px;
+      gap: 6px;
       transition: all 0.2s ease;
     }
-    .btn:active {
-      transform: scale(0.97);
-    }
+
     .btn-primary {
-      background: var(--primary);
-      color: white;
+      background: var(--opovo-red);
+      color: #FFFFFF;
+      box-shadow: 0 4px 12px var(--opovo-red-glow);
     }
+    .btn-primary:hover {
+      background: #B91C1C;
+      transform: translateY(-1px);
+    }
+
     .btn-success {
-      background: var(--success);
-      color: white;
+      background: #059669;
+      color: #FFFFFF;
+      box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3);
     }
+    .btn-success:hover {
+      background: #047857;
+      transform: translateY(-1px);
+    }
+
     .btn-danger {
-      background: var(--danger);
-      color: white;
+      background: #DC2626;
+      color: #FFFFFF;
+      box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
     }
-    .btn-secondary {
-      background: rgba(255, 255, 255, 0.1);
-      color: var(--text-main);
-      border: 1px solid var(--card-border);
+    .btn-danger:hover {
+      background: #B91C1C;
+      transform: translateY(-1px);
     }
-    .btn-secondary:hover {
-      background: rgba(255, 255, 255, 0.15);
+
+    .btn-outline {
+      background: rgba(30, 41, 59, 0.6);
+      border-color: rgba(255, 255, 255, 0.12);
+      color: #E2E8F0;
     }
-    .btn-group {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
+    .btn-outline:hover {
+      background: rgba(51, 65, 85, 0.8);
+      border-color: rgba(255, 255, 255, 0.25);
     }
-    /* Form controls */
-    .form-group {
+
+    /* PLACAR ELEITORAL EXTERIOR */
+    .scoreboard {
       display: flex;
       flex-direction: column;
-      gap: 6px;
+      gap: 14px;
     }
-    .form-label {
-      font-size: 0.8rem;
-      font-weight: 600;
-      color: var(--text-muted);
-    }
-    .form-input, .form-select {
-      background: rgba(0, 0, 0, 0.4);
-      border: 1px solid var(--card-border);
-      color: var(--text-main);
-      padding: 10px 14px;
-      border-radius: 10px;
-      font-family: inherit;
-      font-size: 0.9rem;
-      outline: none;
-    }
-    .form-input:focus, .form-select:focus {
-      border-color: var(--primary);
-    }
-    /* Logs Console */
-    .log-console {
-      background: #05070D;
-      border: 1px solid rgba(255, 255, 255, 0.05);
-      border-radius: 14px;
-      padding: 12px;
-      height: 180px;
-      overflow-y: auto;
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 0.78rem;
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-    .log-item {
-      display: flex;
-      gap: 8px;
-      line-height: 1.4;
-    }
-    .log-time {
-      color: #64748B;
-      flex-shrink: 0;
-    }
-    .log-msg.info { color: #94A3B8; }
-    .log-msg.sucesso { color: #34D399; font-weight: 600; }
-    .log-msg.aviso { color: #FBBF24; }
-    .log-msg.erro { color: #F87171; font-weight: 600; }
-    /* Network Access Card */
-    .ip-box {
-      background: rgba(99, 102, 241, 0.1);
-      border: 1px dashed rgba(99, 102, 241, 0.4);
-      border-radius: 12px;
-      padding: 12px;
+
+    .cand-box {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      font-size: 0.88rem;
+      background: rgba(8, 12, 20, 0.5);
+      border: 1px solid var(--border-subtle);
+      border-radius: 10px;
+      padding: 12px 16px;
     }
-    .ip-text {
-      font-family: 'JetBrains Mono', monospace;
+
+    .cand-meta {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .cand-avatar {
+      width: 14px;
+      height: 38px;
+      border-radius: 4px;
+    }
+
+    .cand-name-title {
       font-weight: 700;
-      color: #818CF8;
+      font-size: 1.05rem;
     }
-    /* Downloads */
-    .download-grid {
+
+    .cand-votos-sub {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      font-family: var(--font-condensed);
+    }
+
+    .cand-percent-display {
+      font-size: 1.7rem;
+      font-weight: 800;
+      font-family: var(--font-condensed);
+    }
+
+    .bar-wrapper {
+      width: 100%;
+      height: 12px;
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 6px;
+      overflow: hidden;
+      display: flex;
+    }
+
+    .bar-seg-lula {
+      background: var(--lula-color);
+      height: 100%;
+      width: 50%;
+      transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .bar-seg-flavio {
+      background: var(--flavio-color);
+      height: 100%;
+      width: 50%;
+      transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .metrics-pill-row {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: 1fr 1fr 1fr;
       gap: 10px;
     }
-    @media (max-width: 600px) {
-      .download-grid {
-        grid-template-columns: 1fr;
-      }
+
+    .pill-card {
+      background: rgba(8, 12, 20, 0.6);
+      border: 1px solid var(--border-subtle);
+      border-radius: 8px;
+      padding: 10px 12px;
+      text-align: center;
     }
-    .download-link {
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid var(--card-border);
+
+    .pill-label {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      font-weight: 600;
+    }
+
+    .pill-data {
+      font-size: 1rem;
+      font-weight: 700;
+      color: #FFFFFF;
+      margin-top: 2px;
+    }
+
+    /* GOOGLE SHEETS & DOWNLOADS */
+    .sheets-box {
+      background: rgba(8, 12, 20, 0.5);
+      border: 1px solid var(--border-subtle);
       border-radius: 12px;
-      padding: 12px;
-      text-decoration: none;
-      color: var(--text-main);
+      padding: 16px;
       display: flex;
       flex-direction: column;
+      gap: 10px;
+    }
+
+    .sheets-url-link {
+      color: #60A5FA;
+      text-decoration: none;
+      word-break: break-all;
+      font-size: 0.88rem;
+      font-weight: 500;
+    }
+    .sheets-url-link:hover {
+      text-decoration: underline;
+    }
+
+    .download-strip {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .download-tile {
+      display: flex;
       align-items: center;
+      gap: 12px;
+      background: rgba(8, 12, 20, 0.5);
+      border: 1px solid var(--border-subtle);
+      padding: 14px 16px;
+      border-radius: 10px;
+      text-decoration: none;
+      color: inherit;
+      transition: all 0.2s;
+    }
+
+    .download-tile:hover {
+      background: rgba(30, 41, 59, 0.7);
+      border-color: rgba(255, 255, 255, 0.2);
+      transform: translateY(-2px);
+    }
+
+    .tile-icon {
+      font-size: 1.6rem;
+    }
+
+    .tile-title {
+      font-weight: 700;
+      font-size: 0.9rem;
+    }
+
+    .tile-sub {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    /* TERMINAL LOG CONSOLE */
+    .terminal-box {
+      background: #05080E;
+      border: 1px solid var(--border-subtle);
+      border-radius: 12px;
+      height: 220px;
+      overflow-y: auto;
+      padding: 14px;
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      display: flex;
+      flex-direction: column;
       gap: 6px;
+    }
+
+    .log-row {
+      display: flex;
+      gap: 10px;
+      line-height: 1.4;
+    }
+
+    .log-ts {
+      color: var(--text-dim);
+      white-space: nowrap;
+    }
+
+    .log-txt.sucesso { color: #34D399; }
+    .log-txt.info { color: #94A3B8; }
+    .log-txt.aviso { color: #FBBF24; }
+    .log-txt.erro { color: #F87171; }
+
+    /* Custom Scrollbar */
+    .terminal-box::-webkit-scrollbar {
+      width: 6px;
+    }
+    .terminal-box::-webkit-scrollbar-track {
+      background: rgba(0, 0, 0, 0.2);
+    }
+    .terminal-box::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 3px;
+    }
+
+    footer {
       text-align: center;
-      font-size: 0.82rem;
-      transition: background 0.2s;
-    }
-    .download-link:hover {
-      background: rgba(255, 255, 255, 0.1);
-    }
-    .download-icon {
-      font-size: 1.3rem;
+      margin-top: 36px;
+      font-size: 0.8rem;
+      color: var(--text-dim);
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <!-- Top Header -->
+    <!-- HEADER EDITORIAL O POVO+ -->
     <header>
-      <div class="header-title">
-        <h1>🗳️ Apurador 2º Turno 2026</h1>
-        <p>Servidor Local de Alta Performance & Controle Remoto</p>
+      <div class="brand-group">
+        <div class="brand-badge-bar">
+          <span class="brand-logo-badge">O POVO+</span>
+          <span class="brand-subtag">Central de Dados</span>
+        </div>
+        <h1>Apuração Presidencial 2º Turno 2026</h1>
+        <p class="header-desc">Monitoramento em Tempo Real do Voto no Exterior (ZZ) & Integração com Flourish</p>
       </div>
-      <div id="statusBadge" class="status-badge">
-        <span class="badge-dot"></span>
-        <span id="statusText">IDLE</span>
+      <div class="live-status-pill">
+        <div class="pulse-dot"></div>
+        <span style="font-weight: 700; font-size: 0.85rem; color: #34D399;" id="statusIndicator">LIVE NA NUVEM</span>
       </div>
     </header>
 
-    <!-- Mobile Remote Access Link -->
-    <div class="ip-box">
-      <div>
-        <span>📱 Acesso pelo Celular (mesmo Wi-Fi):</span>
-        <span class="ip-text" id="localIp">http://192.168.6.116:8080</span>
+    <!-- METRICS STRIP: EXTERIOR -->
+    <div class="metrics-strip">
+      <div class="metric-card">
+        <div class="label">Eleitorado no Exterior</div>
+        <div class="value">916.683</div>
+        <div class="sub">Total de eleitores aptos</div>
       </div>
-      <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.78rem;" onclick="copiarLink()">Copiar</button>
+      <div class="metric-card">
+        <div class="label">Cidades Consulares</div>
+        <div class="value">186</div>
+        <div class="sub">Seções de votação pelo mundo</div>
+      </div>
+      <div class="metric-card">
+        <div class="label">Países Votantes</div>
+        <div class="value">132</div>
+        <div class="sub">Alimentando a aba Mapa mundi</div>
+      </div>
+      <div class="metric-card">
+        <div class="label">Urnas Totalizadas</div>
+        <div class="value" id="urnasMetric" style="color: #34D399;">0,00%</div>
+        <div class="sub">Progresso oficial do TSE</div>
+      </div>
     </div>
 
-    <!-- Main Grid: Timer & Telemetry -->
-    <div class="grid-2">
-      <!-- Card 1: Cronômetro & Agendamento -->
+    <!-- MAIN TWO COLUMN GRID -->
+    <div class="main-grid">
+      <!-- CARD 1: CONTROLE DO ROBÔ -->
       <div class="card">
         <div class="card-header">
-          <h2>⏱️ Agendamento & Cronômetro</h2>
-          <span style="font-size: 0.8rem; color: var(--text-muted);" id="agendamentoLabel">Inativo</span>
+          <div class="card-title">⏱️ Controle & Cronômetro</div>
+          <span style="font-size: 0.8rem; color: #60A5FA; font-weight: 600;" id="modoBadge">Modo: Exterior (ZZ)</span>
         </div>
-        <div class="timer-box">
-          <div class="timer-digits" id="timerDisplay">00:00:00</div>
-          <div class="timer-subtitle" id="timerSubtitle">Aguardando definição ou início manual</div>
+
+        <div class="timer-hero">
+          <div class="timer-display" id="timerDisplay">00:00:00</div>
+          <div class="timer-caption" id="timerSubtitle">Aguardando início ou agendamento</div>
         </div>
-        <div class="btn-group">
-          <button class="btn btn-secondary" onclick="agendarDomingo()">📅 Domingo 00h00</button>
-          <button class="btn btn-secondary" onclick="agendarMinutos(30)">⏳ Em 30 min</button>
+
+        <div class="btn-row">
+          <button class="btn btn-primary" onclick="agendarDomingo()">📅 Agendar Domingo 00h00</button>
+          <button class="btn btn-outline" onclick="cancelarAgendamento()">❌ Cancelar Agendamento</button>
         </div>
-        <div class="btn-group">
+
+        <div class="btn-row">
           <button class="btn btn-success" id="btnIniciar" onclick="iniciarAgora()">▶️ Iniciar Agora</button>
           <button class="btn btn-danger" id="btnParar" onclick="pararAgora()">⏸️ Pausar</button>
         </div>
+
+        <div style="font-size: 0.8rem; color: var(--text-dim); text-align: center; margin-top: 4px;">
+          Varredura configurada para <strong>60 segundos</strong> com parada inteligente aos 100%.
+        </div>
       </div>
 
-      <!-- Card 2: Placar em Tempo Real -->
+      <!-- CARD 2: PLACAR PRESIDENCIAL EXTERIOR -->
       <div class="card">
         <div class="card-header">
-          <h2>📊 Totalização Presidencial</h2>
-          <span style="font-size: 0.8rem; color: #10B981; font-weight: 700;" id="urnasPct">Urnas: 0,00%</span>
+          <div class="card-title">📊 Placar Presidencial no Exterior</div>
+          <span style="font-size: 0.8rem; color: #A78BFA; font-weight: 700;" id="statCiclo">Ciclo #0</span>
         </div>
-        <div class="score-container">
-          <div class="candidate-row">
-            <div class="cand-info">
-              <div class="cand-badge" style="background: var(--lula-color);"></div>
+
+        <div class="scoreboard">
+          <div class="cand-box">
+            <div class="cand-meta">
+              <div class="cand-avatar" style="background: var(--lula-color);"></div>
               <div>
-                <div class="cand-name">Lula</div>
-                <div class="cand-abs" id="votosLulaAbs">0 votos</div>
+                <div class="cand-name-title">Lula</div>
+                <div class="cand-votos-sub" id="votosLulaAbs">0 votos apurados</div>
               </div>
             </div>
-            <div class="cand-pct" style="color: var(--lula-color);" id="pctLula">0,00%</div>
+            <div class="cand-percent-display" style="color: var(--lula-color);" id="pctLula">0,00%</div>
           </div>
-          <div class="candidate-row">
-            <div class="cand-info">
-              <div class="cand-badge" style="background: var(--flavio-color);"></div>
+
+          <div class="cand-box">
+            <div class="cand-meta">
+              <div class="cand-avatar" style="background: var(--flavio-color);"></div>
               <div>
-                <div class="cand-name">Flávio Bolsonaro</div>
-                <div class="cand-abs" id="votosFlavioAbs">0 votos</div>
+                <div class="cand-name-title">Flávio Bolsonaro</div>
+                <div class="cand-votos-sub" id="votosFlavioAbs">0 votos apurados</div>
               </div>
             </div>
-            <div class="cand-pct" style="color: var(--flavio-color);" id="pctFlavio">0,00%</div>
+            <div class="cand-percent-display" style="color: var(--flavio-color);" id="pctFlavio">0,00%</div>
           </div>
-          <div class="progress-bar-bg">
-            <div class="bar-lula" id="barLula"></div>
-            <div class="bar-flavio" id="barFlavio"></div>
+
+          <div class="bar-wrapper">
+            <div class="bar-seg-lula" id="barLula"></div>
+            <div class="bar-seg-flavio" id="barFlavio"></div>
           </div>
-        </div>
-        <div class="stats-row">
-          <div class="stat-pill">
-            <div class="stat-label">Líder</div>
-            <div class="stat-val" id="statLider">--</div>
-          </div>
-          <div class="stat-pill">
-            <div class="stat-label">Diferença</div>
-            <div class="stat-val" id="statDif">0</div>
-          </div>
-          <div class="stat-pill">
-            <div class="stat-label">Ciclo</div>
-            <div class="stat-val" id="statCiclo">#0</div>
+
+          <div class="metrics-pill-row">
+            <div class="pill-card">
+              <div class="pill-label">Líder Exterior</div>
+              <div class="pill-data" id="statLider" style="color: #60A5FA;">--</div>
+            </div>
+            <div class="pill-card">
+              <div class="pill-label">Diferença de Votos</div>
+              <div class="pill-data" id="statDif">0</div>
+            </div>
+            <div class="pill-card">
+              <div class="pill-label">Total Válidos</div>
+              <div class="pill-data" id="statValidos">0</div>
+            </div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Mode Configuration & Google Sheets -->
-    <div class="grid-2">
-      <!-- Configurações Rápidas -->
+    <!-- GRID INFERIOR: PLANILHA & DOWNLOADS -->
+    <div class="main-grid">
+      <!-- CARD 3: FLOURISH & PLANILHA -->
       <div class="card">
         <div class="card-header">
-          <h2>⚙️ Modo & Auto-Desativação</h2>
+          <div class="card-title">📈 Sincronização Google Sheets (Flourish)</div>
+          <button class="btn btn-outline" style="padding: 6px 12px; font-size: 0.78rem;" onclick="sincronizarSheets()">⚡ Forçar Sincronização</button>
         </div>
-        <div class="form-group">
-          <label class="form-label">Escopo da Apuração</label>
-          <select id="selectModo" class="form-select" onchange="salvarConfig()">
-            <option value="exterior">Exterior (186 cidades consulares - ZZ)</option>
-            <option value="brasil">Brasil (5.571 municípios nacionais)</option>
-            <option value="completo">Completo (Brasil + Exterior)</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Intervalo de Varredura (Descanso entre ciclos)</label>
-          <select id="selectIntervalo" class="form-select" onchange="salvarConfig()">
-            <option value="45">45 segundos (Rápido)</option>
-            <option value="60" selected>60 segundos (Recomendado TSE)</option>
-            <option value="120">120 segundos (Conservador)</option>
-          </select>
-        </div>
-        <div style="display: flex; gap: 8px; align-items: center; font-size: 0.85rem; color: #10B981; margin-top: 4px;">
-          <span>✔ Auto-Desativação Inteligente em 100% ativa (protege o PC)</span>
+
+        <div class="sheets-box">
+          <div style="font-size: 0.8rem; color: var(--text-dim); text-transform: uppercase; font-weight: 700;">Status do Envio</div>
+          <div id="sheetsStatus" style="font-size: 1rem; font-weight: 700; color: #34D399;">Aguardando primeiro ciclo</div>
+          
+          <div style="font-size: 0.82rem; color: var(--text-muted); margin-top: 6px;">
+            Planilha Oficial:
+            <div>
+              <a href="https://docs.google.com/spreadsheets/d/1uUmAveUktR3qyU62dmpyuf2wEaRgKIJMFzYOZYuXsho" target="_blank" class="sheets-url-link">
+                Central das eleições - segundo turno (Aba: Mapa mundi) ↗
+              </a>
+            </div>
+          </div>
+
+          <div style="font-size: 0.78rem; color: var(--text-dim); margin-top: 2px;">
+            Intervalo Alvo: <strong>K2:Q244</strong> (Lula2, Bolsonaro2, Total2, Percentuais, 2º turno, Urnas)
+          </div>
         </div>
       </div>
 
-      <!-- Google Sheets Flourish Sync -->
+      <!-- CARD 4: EXPORTAÇÃO DE DADOS -->
       <div class="card">
         <div class="card-header">
-          <h2>📈 Google Sheets (Flourish)</h2>
-          <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.78rem;" onclick="sincronizarSheets()">Forçar Envio</button>
+          <div class="card-title">💾 Exportação & Backups do Exterior</div>
         </div>
-        <div class="stat-pill" style="text-align: left; padding: 12px;">
-          <div class="stat-label">Status da Planilha</div>
-          <div class="stat-val" id="sheetsStatus" style="font-size: 0.95rem; margin-top: 4px; color: #34D399;">Conectado</div>
+
+        <div class="download-strip">
+          <a href="/api/download/csv_exterior" class="download-tile">
+            <span class="tile-icon">🌍</span>
+            <div>
+              <div class="tile-title">CSV Exterior</div>
+              <div class="tile-sub">186 cidades consulares</div>
+            </div>
+          </a>
+
+          <a href="/api/download/banco" class="download-tile">
+            <span class="tile-icon">🗄️</span>
+            <div>
+              <div class="tile-title">Banco SQLite</div>
+              <div class="tile-sub">eleicoes_2turno.db</div>
+            </div>
+          </a>
         </div>
-        <div style="font-size: 0.82rem; color: var(--text-muted); line-height: 1.4;">
-          Planilha Vinculada: <a href="https://docs.google.com/spreadsheets/d/1uUmAveUktR3qyU62dmpyuf2wEaRgKIJMFzYOZYuXsho" target="_blank" style="color: #818CF8; word-break: break-all;">Central das eleições - segundo turno (Aba: Mapa mundi)</a>
-        </div>
-        <div style="font-size: 0.8rem; color: var(--text-muted);">
-          Última sincronização: <span id="sheetsHora">--</span>
+
+        <div style="font-size: 0.8rem; color: var(--text-dim); line-height: 1.4; margin-top: 4px;">
+          Os arquivos são gerados e persistidos a cada ciclo de apuração para conferência jornalística e arquivamento histórico.
         </div>
       </div>
     </div>
 
-    <!-- Downloads Remotos -->
+    <!-- CARD 5: TERMINAL DE LOGS -->
     <div class="card">
       <div class="card-header">
-        <h2>💾 Downloads Remotos para Celular / PC</h2>
+        <div class="card-title">📜 Console de Logs em Tempo Real</div>
+        <span style="font-size: 0.75rem; color: var(--text-dim); font-family: var(--font-mono);">Polling: 2s</span>
       </div>
-      <div class="download-grid">
-        <a href="/api/download/banco" class="download-link">
-          <span class="download-icon">🗄️</span>
-          <strong>Banco SQLite (.db)</strong>
-          <span>eleicoes_2turno.db</span>
-        </a>
-        <a href="/api/download/csv_exterior" class="download-link">
-          <span class="download-icon">🌍</span>
-          <strong>CSV Exterior (186 cid)</strong>
-          <span>mapa_exterior_presidentes</span>
-        </a>
-        <a href="/api/download/csv_brasil" class="download-link">
-          <span class="download-icon">🇧🇷</span>
-          <strong>CSV Brasil (5.571 mun)</strong>
-          <span>mapa_brasil_presidentes</span>
-        </a>
+      <div class="terminal-box" id="logConsole">
+        <div class="log-row">
+          <span class="log-ts">--:--:--</span>
+          <span class="log-txt info">Inicializando console da Central de Dados O POVO+...</span>
+        </div>
       </div>
     </div>
 
-    <!-- Live Terminal Logs Console -->
-    <div class="card">
-      <div class="card-header">
-        <h2>📜 Logs de Execução em Tempo Real</h2>
-      </div>
-      <div class="log-console" id="logConsole">
-        <div class="log-item"><span class="log-time">--:--:--</span><span class="log-msg info">Aguardando primeiros registros...</span></div>
-      </div>
-    </div>
+    <footer>
+      Central de Dados & Redação O POVO+ &bull; Eleições 2026 &bull; Servidor em Nuvem Render
+    </footer>
   </div>
 
   <script>
@@ -1718,75 +1866,77 @@ HTML_INTERFACE = """
     async function atualizarStatus() {
       try {
         const res = await fetch('/api/status');
+        if (!res.ok) return;
         const data = await res.json();
 
-        // 1. Badge de Status
-        const badge = document.getElementById('statusBadge');
-        const text = document.getElementById('statusText');
-        badge.className = 'status-badge ' + data.status.toLowerCase();
-        text.innerText = data.status;
-
-        // 2. Timer
+        // 1. Status Indicator & Timer
+        const stInd = document.getElementById('statusIndicator');
         const timerDisp = document.getElementById('timerDisplay');
         const timerSub = document.getElementById('timerSubtitle');
-        const agendamentoLabel = document.getElementById('agendamentoLabel');
-
-        if (data.status === 'AGENDADO') {
+        
+        if (data.status === 'RUNNING') {
+          stInd.innerText = 'EM EXECUÇÃO';
+          stInd.style.color = '#34D399';
+          timerDisp.innerText = 'EM LOOP';
+          timerDisp.style.color = '#34D399';
+          timerSub.innerText = `Varrendo o TSE a cada ${data.intervalo_segundos}s`;
+        } else if (data.status === 'AGENDADO') {
+          stInd.innerText = 'AGENDADO';
+          stInd.style.color = '#FBBF24';
           timerDisp.innerText = formatarSegundos(data.agendamento_restante);
-          timerSub.innerText = `Ativação automática em: ${data.agendamento_alvo || ''}`;
-          agendamentoLabel.innerText = "Agendado";
-          agendamentoLabel.style.color = "#FBBF24";
-        } else if (data.status === 'RODANDO') {
-          timerDisp.innerText = "EM MARCHA";
-          timerSub.innerText = `Ciclo ativo a cada ${data.intervalo_segundos}s | Duração: ${data.duracao_ultimo_ciclo}s`;
-          agendamentoLabel.innerText = "Em Apuração";
-          agendamentoLabel.style.color = "#34D399";
-        } else if (data.status === 'CONCLUIDO_100') {
-          timerDisp.innerText = "100,00%";
-          timerSub.innerText = "Apuração finalizada com sucesso! PC em repouso.";
-          agendamentoLabel.innerText = "Concluído";
-          agendamentoLabel.style.color = "#34D399";
+          timerDisp.style.color = '#FBBF24';
+          timerSub.innerText = `Início automático em: ${data.agendamento_alvo || 'Domingo 00h'}`;
         } else {
-          timerDisp.innerText = "00:00:00";
-          timerSub.innerText = "Apuração parada. Clique em 'Iniciar' ou agende.";
-          agendamentoLabel.innerText = "Parado";
-          agendamentoLabel.style.color = "#94A3B8";
+          stInd.innerText = 'STANDBY / PAUSADO';
+          stInd.style.color = '#94A3B8';
+          timerDisp.innerText = '00:00:00';
+          timerDisp.style.color = '#60A5FA';
+          timerSub.innerText = 'Pronto para iniciar ou agendar';
         }
 
-        // 3. Placar e Telemetria
-        document.getElementById('urnasPct').innerText = `Urnas: ${data.urnas_pct}`;
-        document.getElementById('pctLula').innerText = data.pct_lula;
-        document.getElementById('pctFlavio').innerText = data.pct_flavio;
-        document.getElementById('votosLulaAbs').innerText = `${formatarNumero(data.votos_lula)} votos`;
-        document.getElementById('votosFlavioAbs').innerText = `${formatarNumero(data.votos_flavio)} votos`;
-
-        document.getElementById('statLider').innerText = data.lider;
+        // 2. Metrics & Placar
+        document.getElementById('urnasMetric').innerText = data.urnas_pct || '0,00%';
+        document.getElementById('statCiclo').innerText = `Ciclo #${data.ciclo_atual || 0}`;
+        document.getElementById('pctLula').innerText = data.pct_lula || '0,00%';
+        document.getElementById('pctFlavio').innerText = data.pct_flavio || '0,00%';
+        document.getElementById('votosLulaAbs').innerText = `${formatarNumero(data.votos_lula)} votos apurados`;
+        document.getElementById('votosFlavioAbs').innerText = `${formatarNumero(data.votos_flavio)} votos apurados`;
+        document.getElementById('statLider').innerText = data.lider || '--';
         document.getElementById('statDif').innerText = formatarNumero(data.diferenca);
-        document.getElementById('statCiclo').innerText = `#${data.ciclo_atual}`;
+        document.getElementById('statValidos').innerText = formatarNumero(data.total_validos);
 
-        // Barra percentual
-        const pLula = parseFloat((data.pct_lula || "0").replace(",", ".")) || 50;
-        const pFlavio = parseFloat((data.pct_flavio || "0").replace(",", ".")) || 50;
-        const totalP = pLula + pFlavio || 100;
-        document.getElementById('barLula').style.width = `${(pLula / totalP) * 100}%`;
-        document.getElementById('barFlavio').style.width = `${(pFlavio / totalP) * 100}%`;
+        // Barra de progresso
+        const tot = (data.votos_lula || 0) + (data.votos_flavio || 0);
+        if (tot > 0) {
+          const pL = (data.votos_lula / tot) * 100;
+          const pF = (data.votos_flavio / tot) * 100;
+          document.getElementById('barLula').style.width = pL + '%';
+          document.getElementById('barFlavio').style.width = pF + '%';
+        } else {
+          document.getElementById('barLula').style.width = '50%';
+          document.getElementById('barFlavio').style.width = '50%';
+        }
 
-        // 4. Google Sheets
-        document.getElementById('sheetsStatus').innerText = data.sheets_status;
-        document.getElementById('sheetsHora').innerText = data.sheets_ultima_atualizacao;
+        // 3. Google Sheets Status
+        const shSt = document.getElementById('sheetsStatus');
+        shSt.innerText = data.sheets_status || 'Aguardando';
+        if (data.sheets_ultima_atualizacao && data.sheets_ultima_atualizacao !== '--') {
+          shSt.innerText += ` (${data.sheets_ultima_atualizacao})`;
+        }
 
-        // 5. Logs Console
+        // 4. Logs Console
         const logBox = document.getElementById('logConsole');
-        logBox.innerHTML = '';
-        (data.logs || []).forEach(l => {
-          const item = document.createElement('div');
-          item.className = 'log-item';
-          item.innerHTML = `<span class="log-time">${l.hora}</span><span class="log-msg ${l.tipo}">${l.msg}</span>`;
-          logBox.appendChild(item);
-        });
-
+        if (data.logs && data.logs.length > 0) {
+          logBox.innerHTML = '';
+          data.logs.forEach(l => {
+            const row = document.createElement('div');
+            row.className = 'log-row';
+            row.innerHTML = `<span class="log-ts">${l.hora}</span><span class="log-txt ${l.tipo}">${l.msg}</span>`;
+            logBox.appendChild(row);
+          });
+        }
       } catch (e) {
-        console.error("Erro ao atualizar status:", e);
+        console.error('Erro polling status:', e);
       }
     }
 
@@ -1804,28 +1954,13 @@ HTML_INTERFACE = """
       await fetch('/api/agendar', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({})
+        body: JSON.stringify({ tipo: 'domingo_00' })
       });
       atualizarStatus();
     }
 
-    async function agendarMinutos(m) {
-      await fetch('/api/agendar', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ minutos: m })
-      });
-      atualizarStatus();
-    }
-
-    async function salvarConfig() {
-      const modo = document.getElementById('selectModo').value;
-      const intervalo = document.getElementById('selectIntervalo').value;
-      await fetch('/api/configurar_modo', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ modo, intervalo })
-      });
+    async function cancelarAgendamento() {
+      await fetch('/api/cancelar_agendamento', { method: 'POST' });
       atualizarStatus();
     }
 
@@ -1834,14 +1969,6 @@ HTML_INTERFACE = """
       atualizarStatus();
     }
 
-    function copiarLink() {
-      const url = document.getElementById('localIp').innerText;
-      navigator.clipboard.writeText(url).then(() => {
-        alert("Link copiado! Abra no navegador do seu smartphone conectado ao mesmo Wi-Fi.");
-      });
-    }
-
-    // Polling a cada 2 segundos
     setInterval(atualizarStatus, 2000);
     atualizarStatus();
   </script>
