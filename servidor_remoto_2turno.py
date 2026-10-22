@@ -780,13 +780,14 @@ def sincronizar_google_sheets(df_dados=None, df_brasil=None, df_exterior=None):
                     agg_ext['Urnas_Apuradas'] = 'sum'
 
                 paises_agg = df_ext_copy.groupby('Pais').agg(agg_ext).to_dict(orient='index')
+                paises_votantes = set(df_dic_ext['Pais'].dropna().str.strip())
                 payload_mundi = []
                 for p_nome in mundi_paises:
                     p_clean = str(p_nome).strip()
-                    d_p = paises_agg.get(p_clean)
-                    if not d_p or d_p.get(tot_ext_col, 0) == 0:
+                    if p_clean not in paises_votantes:
                         payload_mundi.append(['', '', '', '', '', '', ''])
                     else:
+                        d_p = paises_agg.get(p_clean, {})
                         l2 = d_p.get('Lula', 0)
                         b2 = d_p.get('Flávio Bolsonaro', 0)
                         t2 = d_p.get(tot_ext_col, l2 + b2)
@@ -1658,7 +1659,7 @@ HTML_INTERFACE = """
           <div class="stat-val" id="sheetsStatus" style="font-size: 0.95rem; margin-top: 4px; color: #34D399;">Conectado</div>
         </div>
         <div style="font-size: 0.82rem; color: var(--text-muted); line-height: 1.4;">
-          Planilha Vinculada: <a href="https://docs.google.com/spreadsheets/d/1Bwwxh_MRXhFaG8Yty9peiHFz9G5eBhwF-tubITzluWE/edit" target="_blank" style="color: #818CF8; word-break: break-all;">Apuração segundo turno - Internacional</a>
+          Planilha Vinculada: <a href="https://docs.google.com/spreadsheets/d/1uUmAveUktR3qyU62dmpyuf2wEaRgKIJMFzYOZYuXsho" target="_blank" style="color: #818CF8; word-break: break-all;">Central das eleições - segundo turno (Aba: Mapa mundi)</a>
         </div>
         <div style="font-size: 0.8rem; color: var(--text-muted);">
           Última sincronização: <span id="sheetsHora">--</span>
