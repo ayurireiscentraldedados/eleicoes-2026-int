@@ -1,0 +1,25 @@
+# Ambientes Virtuais
+.venv/
+venv/
+env/
+
+# Arquivos Pesados e Legados
+arquivo_1turno/
+Script_2/
+*.bak
+*.db
+*.sqlite3
+
+# Cache do Python
+__pycache__/
+*.pyc
+*.pyo
+
+# IDEs e Logs
+.vscode/
+.idea/
+*.log
+
+# Credenciais de Servico (passadas por variavel de ambiente na nuvem)
+credentials.json
+*.pem

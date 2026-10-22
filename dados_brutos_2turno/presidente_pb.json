@@ -1,0 +1,74 @@
+{
+    "success": true,
+    "title": "Dados retornados com sucesso",
+    "message": "sucesso",
+    "data": {
+        "url": "https://resultados.tse.jus.br/oficial/ele2026/6258/dados/pb/pb-c0001-e006258-u.json",
+        "state": "pb",
+        "number_votes": "0",
+        "status": "success",
+        "position": "Presidente",
+        "last_modified": " ",
+        "last_internal_atualization": "13/10/2026 11:25:32",
+        "ballot_boxes": "0,00",
+        "candidates": [
+            {
+                "name": "LULA",
+                "place": 1,
+                "number": "13",
+                "party": "PT",
+                "situation_candidate": null,
+                "situation": null,
+                "valid_votes": "0",
+                "percentage_valid_votes": "0,00",
+                "unic_number": "280002542548",
+                "photo": "https://opovo.com.br/DS/public/images/ele2026/FBR280002542548_div.jpg"
+            },
+            {
+                "name": "FLAVIO BOLSONARO",
+                "place": 2,
+                "number": "22",
+                "party": "PL",
+                "situation_candidate": null,
+                "situation": null,
+                "valid_votes": "0",
+                "percentage_valid_votes": "0,00",
+                "unic_number": "280002551544",
+                "photo": "https://opovo.com.br/DS/public/images/ele2026/FBR280002551544_div.jpg"
+            },
+            {
+                "name": "Nulo",
+                "place": null,
+                "number": null,
+                "party": null,
+                "situation": null,
+                "valid_votes": "0",
+                "percentage_valid_votes": "0,00",
+                "unic_number": null,
+                "photo": null
+            },
+            {
+                "name": "Branco",
+                "place": null,
+                "number": null,
+                "party": null,
+                "situation": null,
+                "valid_votes": "0",
+                "percentage_valid_votes": "0,00",
+                "unic_number": null,
+                "photo": null
+            },
+            {
+                "name": "Abstenções",
+                "place": null,
+                "number": null,
+                "party": null,
+                "situation": null,
+                "valid_votes": "0",
+                "percentage_valid_votes": "0,00",
+                "unic_number": null,
+                "photo": null
+            }
+        ]
+    }
+}

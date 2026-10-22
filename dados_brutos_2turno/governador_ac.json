@@ -1,0 +1,74 @@
+{
+    "success": true,
+    "title": "Dados retornados com sucesso",
+    "message": "sucesso",
+    "data": {
+        "url": "https://resultados.tse.jus.br/oficial/ele2026/6260/dados/ac/ac-c0003-e006260-u.json",
+        "state": "ac",
+        "number_votes": "0",
+        "status": "success",
+        "position": "Governador",
+        "last_modified": " ",
+        "last_internal_atualization": "13/10/2026 11:25:32",
+        "ballot_boxes": "0,00",
+        "candidates": [
+            {
+                "name": "ALAN RICK",
+                "place": 1,
+                "number": "10",
+                "party": "REPUBLICANOS",
+                "situation_candidate": null,
+                "situation": null,
+                "valid_votes": "0",
+                "percentage_valid_votes": "0,00",
+                "unic_number": "10002532492",
+                "photo": "https://opovo.com.br/DS/public/images/ele2026/FAC10002532492_div.jpg"
+            },
+            {
+                "name": "MAILZA ASSIS",
+                "place": 2,
+                "number": "11",
+                "party": "PP",
+                "situation_candidate": null,
+                "situation": null,
+                "valid_votes": "0",
+                "percentage_valid_votes": "0,00",
+                "unic_number": "10002544107",
+                "photo": "https://opovo.com.br/DS/public/images/ele2026/FAC10002544107_div.jpg"
+            },
+            {
+                "name": "Nulo",
+                "place": null,
+                "number": null,
+                "party": null,
+                "situation": null,
+                "valid_votes": "0",
+                "percentage_valid_votes": "0,00",
+                "unic_number": null,
+                "photo": null
+            },
+            {
+                "name": "Branco",
+                "place": null,
+                "number": null,
+                "party": null,
+                "situation": null,
+                "valid_votes": "0",
+                "percentage_valid_votes": "0,00",
+                "unic_number": null,
+                "photo": null
+            },
+            {
+                "name": "Abstenções",
+                "place": null,
+                "number": null,
+                "party": null,
+                "situation": null,
+                "valid_votes": "0",
+                "percentage_valid_votes": "0,00",
+                "unic_number": null,
+                "photo": null
+            }
+        ]
+    }
+}

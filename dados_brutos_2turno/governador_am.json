@@ -1,0 +1,74 @@
+{
+    "success": true,
+    "title": "Dados retornados com sucesso",
+    "message": "sucesso",
+    "data": {
+        "url": "https://resultados.tse.jus.br/oficial/ele2026/6260/dados/am/am-c0003-e006260-u.json",
+        "state": "am",
+        "number_votes": "0",
+        "status": "success",
+        "position": "Governador",
+        "last_modified": " ",
+        "last_internal_atualization": "13/10/2026 11:25:32",
+        "ballot_boxes": "0,00",
+        "candidates": [
+            {
+                "name": "OMAR AZIZ",
+                "place": 1,
+                "number": "55",
+                "party": "PSD",
+                "situation_candidate": null,
+                "situation": null,
+                "valid_votes": "0",
+                "percentage_valid_votes": "0,00",
+                "unic_number": "40002532272",
+                "photo": "https://opovo.com.br/DS/public/images/ele2026/FAM40002532272_div.jpg"
+            },
+            {
+                "name": "PROFESSORA MARIA DO CARMO",
+                "place": 2,
+                "number": "22",
+                "party": "PL",
+                "situation_candidate": null,
+                "situation": null,
+                "valid_votes": "0",
+                "percentage_valid_votes": "0,00",
+                "unic_number": "40002541626",
+                "photo": "https://opovo.com.br/DS/public/images/ele2026/FAM40002541626_div.jpg"
+            },
+            {
+                "name": "Nulo",
+                "place": null,
+                "number": null,
+                "party": null,
+                "situation": null,
+                "valid_votes": "0",
+                "percentage_valid_votes": "0,00",
+                "unic_number": null,
+                "photo": null
+            },
+            {
+                "name": "Branco",
+                "place": null,
+                "number": null,
+                "party": null,
+                "situation": null,
+                "valid_votes": "0",
+                "percentage_valid_votes": "0,00",
+                "unic_number": null,
+                "photo": null
+            },
+            {
+                "name": "Abstenções",
+                "place": null,
+                "number": null,
+                "party": null,
+                "situation": null,
+                "valid_votes": "0",
+                "percentage_valid_votes": "0,00",
+                "unic_number": null,
+                "photo": null
+            }
+        ]
+    }
+}
