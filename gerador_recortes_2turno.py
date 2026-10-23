@@ -1,6 +1,8 @@
 import os
 import sys
+import time
 import pandas as pd
+from datetime import datetime
 
 # Garante suporte a UTF-8 no terminal Windows
 if sys.platform == 'win32':
