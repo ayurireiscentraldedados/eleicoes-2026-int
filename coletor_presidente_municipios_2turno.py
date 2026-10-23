@@ -239,9 +239,7 @@ def coletar_municipios_brasil(max_workers=40):
                 print(f"  -> {i}/{total_mun} municípios apurados ({taxa:.1f} mun/s)...")
                 
     tempo_total = time.time() - t0
-    print(f"
-✔ Apuração dos {total_mun} municípios concluída em {tempo_total:.1f} segundos!")
-    
+    print(f"\n[OK] Apuracao dos {total_mun} municipios concluida em {tempo_total:.1f} segundos!")    
     df = pd.DataFrame(resultados)
     
     # Salva CSVs locais para backup imediato
