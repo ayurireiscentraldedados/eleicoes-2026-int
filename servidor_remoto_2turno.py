@@ -574,6 +574,18 @@ def sincronizar_google_sheets(df_dados=None, df_brasil=None, df_exterior=None):
         # -------------------------------------------------------------
         if df_brasil is not None and not df_brasil.empty:
             df_br = df_brasil.copy()
+            # Normalizacao de colunas caso venham do SQLite em minusculo
+            for col_orig, col_dest in [
+                ('uf_sigla', 'UF_sigla'),
+                ('estado', 'Estado'),
+                ('municipio', 'Município'),
+                ('lula', 'Lula'),
+                ('flavio_bolsonaro', 'Flávio Bolsonaro'),
+                ('total', 'Total'),
+                ('total_validos', 'Total_Validos')
+            ]:
+                if col_orig in df_br.columns and col_dest not in df_br.columns:
+                    df_br[col_dest] = df_br[col_orig]
             df_br['ibge_str'] = df_br['cod_ibge7'].astype(str).str.strip()
             dic_dados = df_br.set_index('ibge_str').to_dict(orient='index')
 
@@ -722,6 +734,77 @@ def sincronizar_google_sheets(df_dados=None, df_brasil=None, df_exterior=None):
             except Exception as e_abst:
                 adicionar_log(f"Aviso sync Município abstenção: {e_abst}", "aviso")
 
+            # F. Voto nas capitais (1 e 2 turno) -> Intervalo F83:G136 (apenas 2º turno, não mexe no 1º turno)
+            try:
+                ws_cap = sh.worksheet('Voto nas capitais (1 e 2 turno)')
+                cap_rows = ws_cap.get_all_values()
+
+                # Localiza com segurança as linhas de 2º turno (preserva 100% as linhas do 1º turno)
+                t2_indices = [idx for idx, r in enumerate(cap_rows) if len(r) > 2 and '2' in str(r[2]).lower() and 'turno' in str(r[2]).lower()]
+
+                if t2_indices:
+                    start_row = t2_indices[0] + 1  # 1-indexed (linha 83)
+                    end_row = t2_indices[-1] + 1    # 1-indexed (linha 136)
+
+                    payload_cap = []
+                    for idx in t2_indices:
+                        r = cap_rows[idx]
+                        ibge = str(r[0]).strip()
+                        cand = str(r[4]).strip().lower()
+
+                        d = dic_dados.get(ibge, {})
+                        
+                        # Extração resiliente de votos Lula
+                        l2 = 0
+                        for k in ['Lula', 'lula', 'Lula (PT)', 'LULA']:
+                            if k in d and d[k] is not None and str(d[k]).strip() != '':
+                                try:
+                                    l2 = int(float(str(d[k]).replace('.', '').replace(',', '.')))
+                                    break
+                                except Exception:
+                                    pass
+
+                        # Extração resiliente de votos Flávio Bolsonaro
+                        b2 = 0
+                        for k in ['Flávio Bolsonaro', 'Fl\xe1vio Bolsonaro', 'Flavio Bolsonaro', 'flavio_bolsonaro', 'Flavio_Bolsonaro', 'bolsonaro', 'Bolsonaro']:
+                            if k in d and d[k] is not None and str(d[k]).strip() != '':
+                                try:
+                                    b2 = int(float(str(d[k]).replace('.', '').replace(',', '.')))
+                                    break
+                                except Exception:
+                                    pass
+
+                        t2 = l2 + b2
+                        if t2 == 0:
+                            for k in ['Total_Validos', 'total_validos', 'Total', 'total']:
+                                if k in d and d[k] is not None and str(d[k]).strip() != '':
+                                    try:
+                                        t2 = int(float(str(d[k]).replace('.', '').replace(',', '.')))
+                                        break
+                                    except Exception:
+                                        pass
+
+                        l_pct = (l2 / t2 * 100) if t2 > 0 else 0.0
+                        b_pct = (b2 / t2 * 100) if t2 > 0 else 0.0
+
+                        if 'lula' in cand:
+                            votos = l2
+                            pct_str = f"{l_pct:.2f}%".replace('.', ',')
+                        elif 'bolsonaro' in cand or 'fl' in cand:
+                            votos = b2
+                            pct_str = f"{b_pct:.2f}%".replace('.', ',')
+                        else:
+                            votos = 0
+                            pct_str = "0,00%"
+
+                        payload_cap.append([str(votos), pct_str])
+
+                    if payload_cap:
+                        ws_cap.update(range_name=f'F{start_row}:G{end_row}', values=payload_cap, value_input_option='USER_ENTERED')
+                        total_linhas_atualizadas += len(payload_cap)
+            except Exception as e_cap:
+                adicionar_log(f"Aviso sync Voto nas capitais (1 e 2 turno): {e_cap}", "aviso")
+
             # E. Município alfabetização -> Intervalo J2:O5572 (6 colunas)
             try:
                 ws_alfab = sh.worksheet('Município alfabetização')
@@ -832,6 +915,8 @@ def ciclo_execucao():
     adicionar_log(f"Iniciando Ciclo #{AppState.ciclo_atual} (Modo: {AppState.modo.upper()})...", "info")
 
     df_para_sheets = None
+    df_br = None
+    df_ext = None
     urnas_detectadas = "0,00%"
 
     if AppState.modo in ["exterior", "completo"]:
@@ -889,7 +974,9 @@ def ciclo_execucao():
                 registrar_ciclo_sqlite("brasil", urnas_detectadas, lula, flavio, tot, len(df_br))
 
     # Atualiza Google Sheets
-    if df_para_sheets is not None:
+    if AppState.modo == "completo" and (df_br is not None or df_ext is not None):
+        sincronizar_google_sheets(df_brasil=df_br, df_exterior=df_ext)
+    elif df_para_sheets is not None:
         sincronizar_google_sheets(df_para_sheets)
 
     tempo_ciclo = time.time() - t0
@@ -1086,9 +1173,24 @@ def api_sincronizar_sheets_agora():
             df_br = pd.read_csv(CSV_BRASIL_PATH, sep=";", encoding="utf-8-sig")
         except Exception:
             pass
+    if df_br is None and os.path.exists(DB_PATH):
+        try:
+            conn = sqlite3.connect(DB_PATH)
+            df_br = pd.read_sql_query("SELECT * FROM votos_municipios", conn)
+            conn.close()
+        except Exception:
+            pass
+
     if os.path.exists(CSV_EXTERIOR_PATH):
         try:
             df_ext = pd.read_csv(CSV_EXTERIOR_PATH, sep=";", encoding="utf-8-sig")
+        except Exception:
+            pass
+    if df_ext is None and os.path.exists(DB_PATH):
+        try:
+            conn = sqlite3.connect(DB_PATH)
+            df_ext = pd.read_sql_query("SELECT * FROM votos_exterior", conn)
+            conn.close()
         except Exception:
             pass
             
