@@ -1,0 +1,2214 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Apuração Presidencial 2026 - Central de Dados OPOVO+</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%23b2182b'/%3E%3Ctext x='16' y='22' font-size='18' font-family='sans-serif' font-weight='bold' fill='%23ffffff' text-anchor='middle'%3EO%2B%3C/text%3E%3C/svg%3E">
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+    <!-- Google Fonts: Roboto Condensed -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:ital,wght@0,300;0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
+    
+    <!-- TopoJSON Client -->
+    <script src="https://unpkg.com/topojson-client@3.1.0/dist/topojson-client.min.js"></script>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body, html {
+            height: 100%;
+            width: 100%;
+            font-family: 'Roboto Condensed', sans-serif;
+            color: #222222;
+            overflow: hidden;
+            background: #e6e6e6;
+        }
+
+        #map {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            width: 100%;
+            z-index: 1;
+            background: #e6e6e6;
+        }
+
+        /* Panes dedicados */
+        .leaflet-pane.bgLabelsPane {
+            pointer-events: none !important;
+            z-index: 280;
+        }
+
+        .leaflet-pane.stateLabelsPane {
+            pointer-events: none !important;
+            z-index: 290;
+        }
+
+        /* Tooltip interativo leve ao passar o mouse */
+        .leaflet-tooltip.mun-hover-tooltip {
+            background: rgba(17, 24, 39, 0.95) !important;
+            border: 1px solid rgba(255, 255, 255, 0.2) !important;
+            color: #ffffff !important;
+            font-family: 'Roboto Condensed', sans-serif !important;
+            font-size: 11px !important;
+            font-weight: 700 !important;
+            padding: 4px 8px !important;
+            border-radius: 4px !important;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.35) !important;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            pointer-events: none !important;
+            white-space: nowrap !important;
+        }
+
+        .leaflet-tooltip.mun-hover-tooltip::before {
+            border-top-color: rgba(17, 24, 39, 0.95) !important;
+        }
+
+        /* RÓTULOS DOS ESTADOS (UFs) - Apenas a SIGLA para máxima clareza */
+        .state-label-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none !important;
+            user-select: none !important;
+        }
+
+        .state-label-box {
+            text-align: center;
+            pointer-events: none !important;
+        }
+
+        .state-abbr {
+            font-family: 'Roboto Condensed', 'Inter', -apple-system, sans-serif;
+            font-size: 14px;
+            font-weight: 900;
+            color: #0f172a;
+            letter-spacing: 0.8px;
+            text-shadow: 
+                -2px -2px 0 #ffffff,
+                 2px -2px 0 #ffffff,
+                -2px  2px 0 #ffffff,
+                 2px  2px 0 #ffffff,
+                -1px -1px 0 #ffffff,
+                 1px -1px 0 #ffffff,
+                -1px  1px 0 #ffffff,
+                 1px  1px 0 #ffffff,
+                 0 0 6px #ffffff,
+                 0 0 10px #ffffff;
+            line-height: 1;
+        }
+
+        #map.zoom-4 .state-abbr { font-size: 13px; }
+        #map.zoom-5 .state-abbr { font-size: 15px; }
+        #map.zoom-6 .state-abbr,
+        #map.zoom-7 .state-abbr { font-size: 16px; }
+        #map.zoom-8 .state-abbr,
+        #map.zoom-9 .state-abbr,
+        #map.zoom-10 .state-abbr { font-size: 13px; opacity: 0.7; }
+
+        /* Loading Overlay */
+        #loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #ffffff;
+            z-index: 99999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.4s ease, visibility 0.4s ease;
+        }
+
+        .loading-box {
+            background: #ffffff;
+            padding: 30px 40px;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.12);
+            text-align: center;
+            max-width: 380px;
+            width: 90%;
+        }
+
+        .loading-brand {
+            font-family: 'Roboto Condensed', sans-serif;
+            font-size: 1.15rem;
+            font-weight: 800;
+            color: #111111;
+            letter-spacing: 1.2px;
+            text-transform: uppercase;
+            margin-bottom: 20px;
+        }
+
+        .loading-brand span {
+            color: #FCA311;
+        }
+
+        .loading-spinner {
+            width: 44px;
+            height: 44px;
+            border: 4px solid #f0f0f0;
+            border-top: 4px solid #111111;
+            border-radius: 50%;
+            margin: 0 auto 18px;
+            animation: spin 0.8s linear infinite;
+        }
+
+        .loading-progress-bar {
+            width: 100%;
+            height: 4px;
+            background: #f0f0f0;
+            border-radius: 2px;
+            overflow: hidden;
+            margin-bottom: 14px;
+        }
+
+        .loading-progress-fill {
+            height: 100%;
+            width: 70%;
+            background: linear-gradient(90deg, #111111, #FCA311);
+            animation: progress-indeterminate 1.5s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @keyframes progress-indeterminate {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(200%); }
+        }
+
+        .loading-text {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: #444;
+            line-height: 1.4;
+        }
+
+        /* SIDEBAR FLUTUANTE EDITORIAL O POVO+ */
+        .sidebar {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            width: 340px;
+            background: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.18);
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            border: 1px solid rgba(0,0,0,0.06);
+        }
+
+        .sidebar-header {
+            padding: 16px 18px 16px;
+        }
+
+        .mobile-drag-handle,
+        .mobile-drag-hint {
+            display: none !important;
+        }
+
+        .brand-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 6px;
+        }
+
+        .brand-title {
+            font-size: 1.05rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: #111;
+        }
+
+        .brand-title span {
+            color: #FCA311;
+        }
+
+        .live-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            background: #fee2e2;
+            color: #b91c1c;
+            padding: 2px 7px;
+            border-radius: 12px;
+            font-size: 0.72rem;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+        }
+
+        .live-dot {
+            width: 6px;
+            height: 6px;
+            background: #dc2626;
+            border-radius: 50%;
+            animation: pulse-live 1.2s infinite ease-in-out;
+        }
+
+        @keyframes pulse-live {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.4; transform: scale(1.3); }
+        }
+
+        .main-title {
+            font-size: 1.35rem;
+            font-weight: 700;
+            line-height: 1.15;
+            color: #111;
+            margin-bottom: 12px;
+        }
+
+        /* CARD DO PLACAR */
+        .scoreboard-card {
+            background: #fbfbfb;
+            border: 1px solid #ededed;
+            border-radius: 6px;
+            padding: 10px 12px;
+            margin-bottom: 12px;
+        }
+
+        .cand-row-score {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .cand-info-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .cand-photo-maj {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid transparent;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+        }
+
+        .cand-photo-maj.lula-border { border-color: #b2182b; }
+        .cand-photo-maj.flavio-border { border-color: #2166ac; }
+
+        .cand-text-meta {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .cand-name-title {
+            font-size: 0.98rem;
+            font-weight: 700;
+            color: #111;
+            line-height: 1.1;
+        }
+
+        .cand-party-tag {
+            font-size: 0.75rem;
+            color: #666;
+            font-weight: 600;
+        }
+
+        .cand-score-vals {
+            text-align: right;
+        }
+
+        .cand-pct-main {
+            font-size: 1.35rem;
+            font-weight: 800;
+            line-height: 1;
+        }
+
+        .cand-pct-main.lula { color: #b2182b; }
+        .cand-pct-main.flavio { color: #2166ac; }
+
+        .cand-votes-sub {
+            font-size: 0.72rem;
+            color: #777;
+            font-weight: 500;
+        }
+
+        /* TERMÔMETRO 50% */
+        .thermometer-container {
+            margin-top: 6px;
+            padding-top: 6px;
+            border-top: 1px dashed #e5e5e5;
+        }
+
+        .thermometer-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.72rem;
+            font-weight: 700;
+            color: #666;
+            margin-bottom: 4px;
+        }
+
+        .thermometer-track {
+            position: relative;
+            height: 8px;
+            background: #e5e7eb;
+            border-radius: 4px;
+            overflow: visible;
+            display: flex;
+        }
+
+        .half-marker-pin {
+            position: absolute;
+            left: 50%;
+            top: -3px;
+            bottom: -3px;
+            width: 2px;
+            background: #111827;
+            z-index: 10;
+        }
+
+        .thermometer-fill-lula {
+            height: 100%;
+            background: #b2182b;
+            border-radius: 4px 0 0 4px;
+            transition: width 0.4s ease;
+        }
+
+        .thermometer-fill-flavio {
+            height: 100%;
+            background: #2166ac;
+            border-radius: 0 4px 4px 0;
+            transition: width 0.4s ease;
+        }
+
+        /* CAMPO DE BUSCA */
+        .search-container {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .search-container input {
+            width: 100%;
+            padding: 8px 34px 8px 10px;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            font-family: 'Roboto Condensed', sans-serif;
+            font-size: 0.88rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .search-container input:focus {
+            border-color: #FCA311;
+        }
+
+        .search-container button {
+            position: absolute;
+            right: 4px;
+            background: none;
+            border: none;
+            color: #6b7280;
+            cursor: pointer;
+            padding: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .search-results {
+            list-style: none;
+            max-height: 180px;
+            overflow-y: auto;
+            border: 1px solid #e5e7eb;
+            border-radius: 4px;
+            margin-top: 4px;
+            background: #ffffff;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .search-results.hidden { display: none; }
+
+        .search-results li {
+            padding: 7px 10px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            border-bottom: 1px solid #f3f4f6;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .search-results li:hover {
+            background: #f8fafc;
+            color: #111;
+        }
+
+        /* CONTROLES FLUTUANTES */
+        .floating-controls {
+            position: absolute;
+            bottom: 24px;
+            right: 20px;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .floating-btn {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            background: #ffffff;
+            border: 1px solid rgba(0,0,0,0.12);
+            box-shadow: 0 4px 14px rgba(0,0,0,0.15);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #1e293b;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .floating-btn:hover {
+            background: #111827;
+            color: #ffffff;
+            transform: scale(1.06);
+        }
+
+        /* POPUP / CARD DE DETALHES DO MUNICÍPIO */
+        #custom-tooltip {
+            position: absolute;
+            z-index: 1001;
+            pointer-events: auto;
+            opacity: 1;
+            transform: translate(-50%, 0) scale(1);
+            transition: opacity 0.2s ease, transform 0.2s ease;
+            will-change: transform, opacity;
+        }
+
+        #custom-tooltip.hidden {
+            opacity: 0 !important;
+            transform: translate(-50%, 8px) scale(0.96) !important;
+            pointer-events: none !important;
+        }
+
+        .op-tooltip {
+            background: #ffffff;
+            border-radius: 14px;
+            box-shadow: 0 20px 35px -5px rgba(0,0,0,0.22), 0 10px 15px -5px rgba(0,0,0,0.1);
+            padding: 16px 18px;
+            width: 320px;
+            max-width: 340px;
+            box-sizing: border-box;
+            border-left: 5px solid #111;
+            border-top: 1px solid #f1f5f9;
+            border-right: 1px solid #f1f5f9;
+            border-bottom: 1px solid #e2e8f0;
+            pointer-events: auto;
+            position: relative;
+        }
+
+        .tt-close-btn {
+            position: absolute;
+            top: 6px;
+            right: 6px;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: #f1f5f9;
+            border: 1px solid #cbd5e1;
+            font-size: 1.3rem;
+            font-weight: 700;
+            line-height: 1;
+            color: #1e293b;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 30;
+            transition: all 0.15s ease;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+            -webkit-tap-highlight-color: transparent;
+        }
+        .tt-close-btn:hover,
+        .tt-close-btn:active {
+            background: #dc2626;
+            color: #ffffff;
+            border-color: #dc2626;
+        }
+
+        .tt-title {
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: #111;
+            margin-bottom: 1px;
+            padding-right: 32px;
+            line-height: 1.2;
+        }
+
+        .tt-subtitle {
+            font-size: 0.8rem;
+            color: #64748b;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+
+        .margin-badge {
+            display: inline-block;
+            background: #f1f5f9;
+            color: #334155;
+            padding: 3px 10px;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .tt-cand-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 4px;
+        }
+
+        .tt-cand-row img {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            object-fit: cover;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+        }
+
+        .tt-cand-info {
+            flex: 1;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 1.02rem;
+            font-weight: 700;
+        }
+
+        .tt-cand-info span:last-child {
+            font-size: 1.08rem;
+            font-weight: 800;
+        }
+
+        .tt-bar-bg {
+            width: 100%;
+            height: 6px;
+            background: #f1f5f9;
+            border-radius: 3px;
+            overflow: hidden;
+            margin-bottom: 8px;
+        }
+
+        .tt-bar-fill {
+            height: 100%;
+            border-radius: 2px;
+            transition: width 0.3s ease;
+        }
+
+        .tt-footer {
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px solid #f1f5f9;
+            font-size: 0.92rem;
+            color: #475569;
+        }
+
+        /* MODAL DE AJUDA */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.hidden { display: none; }
+
+        .modal-content {
+            background: #fff;
+            width: 90%;
+            max-width: 420px;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 8px;
+        }
+
+        .modal-header h2 { font-size: 1.2rem; font-weight: 700; }
+        .close-btn { background: none; border: none; font-size: 1.5rem; cursor: pointer; }
+
+        .legend-scale {
+            display: flex;
+            height: 10px;
+            gap: 1px;
+            margin: 8px 0 4px 0;
+        }
+        .scale-step { flex: 1; }
+
+        .legend-axis {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.75rem;
+            color: #666;
+            margin-bottom: 12px;
+        }
+
+        /* RESPONSIVIDADE MOBILE */
+        
+        @media (max-width: 768px) {
+            .floating-urnas-pill {
+                top: 10px;
+                padding: 6px 14px;
+                gap: 7px;
+            }
+
+            .urnas-pill-text {
+                font-size: 0.72rem;
+            }
+
+            .urnas-pill-val {
+                font-size: 0.98rem;
+            }
+
+            .urnas-pill-badge {
+                display: none;
+            }
+
+            .cand-grid-desktop {
+                display: none !important;
+            }
+
+            .cand-grid-mobile {
+                display: flex !important;
+                gap: 6px;
+                align-items: stretch;
+            }
+
+            /* No mobile, a legenda flutuante fica oculta na tela base e aparece dentro do drawer */
+            .map-floating-legend {
+                display: none !important;
+            }
+
+            .sidebar {
+                width: 100%;
+                top: auto;
+                bottom: 0;
+                left: 0;
+                max-height: 75%;
+                border-radius: 16px 16px 0 0;
+                box-shadow: 0 -4px 25px rgba(0,0,0,0.22);
+                transform: translateY(calc(100% - 170px)); /* Mostra Drag bar + Cabeçalho + Ambos os Candidatos lado a lado */
+                transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+                z-index: 1600 !important;
+                overflow-y: auto;
+            }
+
+            .sidebar.open {
+                transform: translateY(0) !important;
+                z-index: 2000 !important;
+            }
+
+            .drawer-drag-zone {
+                display: block !important;
+                position: relative;
+                padding: 8px 12px 3px;
+                cursor: pointer;
+            }
+
+            .mobile-drag-handle {
+                display: block !important;
+                width: 40px;
+                height: 4px;
+                background: #cbd5e1;
+                border-radius: 3px;
+                margin: 0 auto 5px;
+            }
+
+            .mobile-drag-center {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                width: 100%;
+            }
+
+            .mobile-drag-hint {
+                display: inline-block !important;
+                font-size: 0.72rem !important;
+                font-weight: 700 !important;
+                color: #64748b !important;
+                text-align: center !important;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+                margin: 0 auto !important;
+            }
+
+            .drawer-close-btn {
+                position: absolute;
+                top: 6px;
+                right: 12px;
+            }
+
+            .sidebar.open .drawer-close-btn {
+                display: flex !important;
+            }
+
+            .sidebar-legend-card-mobile {
+                display: block;
+                background: #f8fafc;
+                border: 1px solid #cbd5e1;
+                border-radius: 10px;
+                padding: 10px 12px;
+                margin: 10px 0;
+            }
+
+            .sidebar-header {
+                padding: 4px 12px 10px;
+                cursor: pointer;
+            }
+
+            .brand-title { font-size: 0.92rem; }
+            .main-title { font-size: 1.10rem; margin-bottom: 6px; }
+            .scoreboard-card { padding: 6px 8px; margin-bottom: 8px; }
+
+            .s-scale-bar {
+                height: 14px;
+            }
+
+            .s-legend-labels {
+                font-size: 0.74rem;
+            }
+
+            .tt-urnas-pill {
+                font-size: 0.74rem !important;
+                padding: 2px 6px !important;
+            }
+
+            .floating-controls {
+                bottom: 185px;
+            }
+
+            .sidebar.open ~ .floating-controls {
+                bottom: calc(60% + 15px);
+            }
+
+            /* POPUP NO MOBILE: Compacto, perfeitamente centrado e com X visível */
+            #custom-tooltip {
+                position: fixed !important;
+                bottom: 180px !important;
+                top: auto !important;
+                left: 50% !important;
+                transform: translateX(-50%) !important;
+                width: calc(100% - 24px) !important;
+                max-width: 270px !important;
+                z-index: 1002 !important;
+                pointer-events: auto !important;
+            }
+
+            #custom-tooltip.hidden {
+                opacity: 0 !important;
+                transform: translate(-50%, 8px) scale(0.96) !important;
+                pointer-events: none !important;
+            }
+
+            .op-tooltip {
+                width: 100% !important;
+                max-width: 100% !important;
+                box-sizing: border-box !important;
+                padding: 8px 12px 10px 12px !important;
+                border-radius: 8px !important;
+                box-shadow: 0 8px 24px rgba(0,0,0,0.32) !important;
+                border-left: 4px solid #111 !important;
+                background: #ffffff !important;
+            }
+
+            .tt-close-btn {
+                top: 6px !important;
+                right: 6px !important;
+                width: 26px !important;
+                height: 26px !important;
+                font-size: 1.25rem !important;
+                background: #f1f5f9 !important;
+                color: #0f172a !important;
+                border: 1px solid #cbd5e1 !important;
+                box-shadow: 0 1px 3px rgba(0,0,0,0.15) !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                z-index: 40 !important;
+            }
+
+            .tt-title {
+                font-size: 1.15rem !important;
+                font-weight: 700 !important;
+                padding-right: 30px !important;
+                line-height: 1.15 !important;
+            }
+
+            .tt-subtitle {
+                font-size: 0.8rem !important;
+                margin-bottom: 3px !important;
+            }
+
+            .margin-badge {
+            display: inline-block;
+            background: #f1f5f9;
+            color: #334155;
+            padding: 3px 10px;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+            .tt-cand-row {
+                gap: 6px !important;
+                margin-bottom: 2px !important;
+            }
+
+            .tt-cand-row img {
+                width: 22px !important;
+                height: 22px !important;
+            }
+
+            .tt-cand-info {
+                font-size: 0.85rem !important;
+            }
+
+            .tt-bar-bg {
+                height: 4px !important;
+                margin-bottom: 4px !important;
+            }
+
+            .tt-footer {
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px solid #f1f5f9;
+            font-size: 0.92rem;
+            color: #475569;
+        }
+        }
+    
+        
+        /* BACKDROP PARA DRAWER MOBILE */
+        .drawer-backdrop {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(15, 23, 42, 0.45);
+            backdrop-filter: blur(2px);
+            z-index: 1500;
+            opacity: 1;
+            transition: opacity 0.25s ease;
+        }
+
+        .drawer-backdrop.hidden {
+            display: none !important;
+            opacity: 0 !important;
+            pointer-events: none !important;
+        }
+
+        /* DRAWER CLOSE BUTTON & DRAG ROW */
+        .drawer-drag-zone {
+            display: none;
+        }
+
+        .drawer-close-btn {
+            display: none;
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            background: #f1f5f9;
+            border: 1px solid #cbd5e1;
+            color: #334155;
+            font-size: 14px;
+            font-weight: 700;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            padding: 0;
+            line-height: 1;
+        }
+
+        .drawer-close-btn:hover {
+            background: #fee2e2;
+            color: #b91c1c;
+            border-color: #fca5a5;
+        }
+
+        /* LEGENDA NO CARD LATERAL - ALTA VISIBILIDADE */
+        .sidebar-legend-card {
+            background: #f8fafc;
+            border: 1px solid #cbd5e1;
+            border-radius: 10px;
+            padding: 12px 14px;
+            margin-bottom: 14px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        .s-legend-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .s-legend-title {
+            font-size: 0.8rem;
+            font-weight: 800;
+            color: #1e293b;
+            letter-spacing: 0.6px;
+            text-transform: uppercase;
+        }
+
+        .s-urnas-pill {
+            background: #0f172a;
+            color: #ffffff;
+            font-size: 0.72rem;
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-weight: 700;
+            letter-spacing: 0.3px;
+        }
+
+        .s-urnas-pill strong {
+            color: #38bdf8;
+            font-weight: 800;
+        }
+
+        .s-scale-bar {
+            display: flex;
+            height: 18px;
+            border-radius: 5px;
+            overflow: hidden;
+            box-shadow: inset 0 1px 2px rgba(0,0,0,0.15);
+            border: 1px solid rgba(0,0,0,0.1);
+            margin-bottom: 6px;
+        }
+
+        .s-scale-step {
+            flex: 1;
+            height: 100%;
+        }
+
+        .s-legend-labels {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.82rem;
+            font-weight: 800;
+            line-height: 1.2;
+            margin-bottom: 4px;
+        }
+
+        .s-legend-labels .leg-lula { color: #b2182b; }
+        .s-legend-labels .leg-empate { color: #475569; font-weight: 700; font-size: 0.76rem; }
+        .s-legend-labels .leg-flavio { color: #2166ac; }
+
+        .s-legend-subtext {
+            font-size: 0.72rem;
+            color: #64748b;
+            text-align: center;
+            line-height: 1.2;
+        }
+
+        /* POPUP DO MUNICÍPIO: HEADER COM URNAS EXPLÍCITO */
+        .tt-header-row {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 8px;
+            padding-right: 28px;
+            margin-bottom: 4px;
+        }
+
+        .tt-urnas-pill {
+            background: #fffbeb;
+            border: 1px solid #fde68a;
+            color: #92400e;
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            white-space: nowrap;
+            flex-shrink: 0;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+
+        .tt-urnas-pill strong {
+            color: #b45309;
+            font-weight: 900;
+        }
+
+
+        /* BOTÃO / PILL FLUTUANTE DE APURAÇÃO DAS URNAS (TOPO CENTRAL) - HOMOGÊNEO / BRANCO COM AMARELO OPOVO+ */
+        .floating-urnas-pill {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1200;
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            border-radius: 9999px;
+            padding: 7px 18px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #1e293b;
+            font-family: 'Roboto Condensed', sans-serif;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12), 0 1px 3px rgba(0, 0, 0, 0.05);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            user-select: none;
+        }
+
+        .floating-urnas-pill:hover {
+            background: #f8fafc;
+            border-color: #94a3b8;
+            transform: translateX(-50%) translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.16);
+        }
+
+        .urnas-pulse-dot {
+            width: 8px;
+            height: 8px;
+            background: #16a34a;
+            border-radius: 50%;
+            box-shadow: 0 0 0 0 rgba(22, 163, 74, 0.7);
+            animation: pulse-green 2s infinite;
+        }
+
+        @keyframes pulse-green {
+            0% {
+                transform: scale(0.95);
+                box-shadow: 0 0 0 0 rgba(22, 163, 74, 0.7);
+            }
+            70% {
+                transform: scale(1);
+                box-shadow: 0 0 0 8px rgba(22, 163, 74, 0);
+            }
+            100% {
+                transform: scale(0.95);
+                box-shadow: 0 0 0 0 rgba(22, 163, 74, 0);
+            }
+        }
+
+        .urnas-pill-text {
+            font-size: 0.82rem;
+            font-weight: 800;
+            color: #334155;
+            letter-spacing: 0.6px;
+            text-transform: uppercase;
+        }
+
+        .urnas-pill-val {
+            font-size: 1.18rem;
+            font-weight: 900;
+            color: #FCA311; /* Cor amarela do '+' do OPOVO+ */
+            text-shadow: 0 0 1px rgba(180, 83, 9, 0.3);
+            letter-spacing: 0.5px;
+        }
+
+        @media (min-width: 769px) {
+            .sidebar-legend-card-mobile {
+                display: none !important;
+            }
+        }
+
+        /* CARD FLUTUANTE PRÓPRIO DA LEGENDA NO MAPA (PC / DESKTOP) - PERFEITAMENTE CENTRALIZADO E ALINHADO */
+        .map-floating-legend {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            border-radius: 12px;
+            padding: 12px 20px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            font-family: 'Roboto Condensed', sans-serif;
+            width: 420px;
+            max-width: calc(100% - 32px);
+            box-sizing: border-box;
+            transition: opacity 0.2s ease;
+        }
+
+        .mfl-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .mfl-title {
+            font-size: 0.82rem;
+            font-weight: 800;
+            color: #1e293b;
+            letter-spacing: 0.6px;
+            text-transform: uppercase;
+        }
+
+        .mfl-tag {
+            background: #f1f5f9;
+            color: #475569;
+            font-size: 0.68rem;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 700;
+        }
+
+        .mfl-bar {
+            display: flex;
+            height: 18px;
+            border-radius: 5px;
+            overflow: hidden;
+            box-shadow: inset 0 1px 2px rgba(0,0,0,0.15);
+            border: 1px solid rgba(0,0,0,0.12);
+            margin-bottom: 6px;
+        }
+
+        .mfl-step {
+            flex: 1;
+            height: 100%;
+        }
+
+        .mfl-labels {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.88rem; /* 14px - BEM LEGÍVEL */
+            font-weight: 800;
+            line-height: 1.2;
+            margin-bottom: 4px;
+        }
+
+        .mfl-labels .leg-lula { color: #b2182b; flex: 1; text-align: left; }
+        .mfl-labels .leg-empate { color: #64748b; font-weight: 700; font-size: 0.78rem; flex: 1; text-align: center; }
+        .mfl-labels .leg-flavio { color: #2166ac; flex: 1; text-align: right; }
+
+        .mfl-subtext {
+            font-size: 0.74rem;
+            color: #64748b;
+            text-align: center;
+            line-height: 1.2;
+        }
+
+        /* GRID DE CANDIDATOS LADO A LADO NO MOBILE (TOTAL IMPARCIALIDADE) */
+        .cand-grid-desktop {
+            display: block;
+        }
+
+        .cand-grid-mobile {
+            display: none;
+        }
+
+        .cand-col-card {
+            flex: 1;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 6px 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .cand-col-card.lula-col {
+            border-left: 3px solid #b2182b;
+        }
+
+        .cand-col-card.flavio-col {
+            border-left: 3px solid #2166ac;
+        }
+
+        .cand-col-top {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .cand-col-photo {
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .cand-col-meta {
+            display: flex;
+            flex-direction: column;
+            line-height: 1.1;
+        }
+
+        .cand-col-name {
+            font-size: 0.85rem;
+            font-weight: 800;
+            color: #0f172a;
+        }
+
+        .cand-col-party {
+            font-size: 0.65rem;
+            color: #64748b;
+            font-weight: 600;
+        }
+
+        .cand-col-bottom {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            margin-top: 2px;
+        }
+
+        .cand-col-pct {
+            font-size: 1.05rem;
+            font-weight: 900;
+            line-height: 1;
+        }
+
+        .cand-col-votes {
+            font-size: 0.68rem;
+            color: #64748b;
+            font-weight: 600;
+        }
+
+        .cand-grid-vs {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.72rem;
+            font-weight: 800;
+            color: #94a3b8;
+            padding: 0 4px;
+        }
+
+    </style>
+</head>
+<body>
+
+    <!-- Loading Overlay -->
+        <!-- BOTÃO FLUTUANTE DE APURAÇÃO DAS URNAS (TOPO CENTRAL) -->
+    <div class="floating-urnas-pill" id="floating-urnas-pill" onclick="focarBrasil()" title="Clique para focar no Brasil">
+        <span class="urnas-pulse-dot"></span>
+        <span class="urnas-pill-text">URNAS APURADAS:</span>
+        <span class="urnas-pill-val" id="floating-urnas-val">0,00%</span>
+    </div>
+
+    <div id="loading-overlay">
+        <div class="loading-box">
+            <div class="loading-brand">Central de dados OPOVO<span>+</span></div>
+            <div class="loading-spinner"></div>
+            <div class="loading-progress-bar">
+                <div class="loading-progress-fill"></div>
+            </div>
+            <p id="loading-status-text" class="loading-text">Carregando apuração dos 5.571 municípios...</p>
+        </div>
+    </div>
+
+    <!-- MAPA LEAFLET -->
+    <div id="map"></div>
+
+    <div id="drawer-backdrop" class="drawer-backdrop hidden" onclick="fecharSidebar()"></div>
+
+    <!-- SIDEBAR FLUTUANTE EDITORIAL O POVO+ -->
+    <div class="sidebar" id="sidebar">
+        <!-- ÁREA SUPERIOR ARRASTÁVEL / TOCÁVEL MOBILE -->
+        <div class="drawer-drag-zone" id="drawer-drag-zone">
+            <div class="mobile-drag-handle"></div>
+            <div class="mobile-drag-center">
+                <span class="mobile-drag-hint" id="mobile-drag-hint">▲ Toque para abrir busca</span>
+            </div>
+            <button class="drawer-close-btn" id="drawer-close-btn" title="Recolher" onclick="fecharSidebar(event)">&times;</button>
+        </div>
+
+        <div class="sidebar-header" id="sidebar-header">
+            <div class="brand-row" id="sidebar-brand-bar">
+                <h1 class="brand-title">Central de dados OPOVO<span>+</span></h1>
+                <div class="live-tag">
+                    <span class="live-dot"></span>
+                    <span>AO VIVO</span>
+                </div>
+            </div>
+
+            <h2 class="main-title">Apuração Presidencial 2026</h2>
+
+            <!-- PLACAR NACIONAL: VERSÃO DESKTOP (LINHAS) -->
+            <div class="scoreboard-card cand-grid-desktop">
+                <!-- LULA -->
+                <div class="cand-row-score">
+                    <div class="cand-info-left">
+                        <img src="lula.jpg" class="cand-photo-maj lula-border" alt="Lula">
+                        <div class="cand-text-meta">
+                            <span class="cand-name-title">Lula</span>
+                            <span class="cand-party-tag">PT • 13</span>
+                        </div>
+                    </div>
+                    <div class="cand-score-vals">
+                        <div class="cand-pct-main lula" id="lula-nacional-pct">0,00%</div>
+                        <div class="cand-votes-sub" id="lula-nacional-votos">0 votos</div>
+                    </div>
+                </div>
+
+                <!-- FLÁVIO BOLSONARO -->
+                <div class="cand-row-score" style="margin-bottom: 2px;">
+                    <div class="cand-info-left">
+                        <img src="flavio.jpg" class="cand-photo-maj flavio-border" alt="Flávio Bolsonaro">
+                        <div class="cand-text-meta">
+                            <span class="cand-name-title">Flávio Bolsonaro</span>
+                            <span class="cand-party-tag">PL • 22</span>
+                        </div>
+                    </div>
+                    <div class="cand-score-vals">
+                        <div class="cand-pct-main flavio" id="flavio-nacional-pct">0,00%</div>
+                        <div class="cand-votes-sub" id="flavio-nacional-votos">0 votos</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PLACAR NACIONAL: VERSÃO MOBILE LADO A LADO (100% IMPARCIALIDADE) -->
+            <div class="scoreboard-card cand-grid-mobile">
+                <div class="cand-col-card lula-col">
+                    <div class="cand-col-top">
+                        <img src="lula.jpg" class="cand-col-photo lula-border" alt="Lula">
+                        <div class="cand-col-meta">
+                            <span class="cand-col-name">Lula</span>
+                            <span class="cand-col-party">PT • 13</span>
+                        </div>
+                    </div>
+                    <div class="cand-col-bottom">
+                        <span class="cand-col-pct lula" id="lula-col-pct">0,00%</span>
+                        <span class="cand-col-votes" id="lula-col-votos">0 votos</span>
+                    </div>
+                </div>
+
+                <div class="cand-grid-vs">VS</div>
+
+                <div class="cand-col-card flavio-col">
+                    <div class="cand-col-top">
+                        <img src="flavio.jpg" class="cand-col-photo flavio-border" alt="Flávio Bolsonaro">
+                        <div class="cand-col-meta">
+                            <span class="cand-col-name">Flávio B.</span>
+                            <span class="cand-col-party">PL • 22</span>
+                        </div>
+                    </div>
+                    <div class="cand-col-bottom">
+                        <span class="cand-col-pct flavio" id="flavio-col-pct">0,00%</span>
+                        <span class="cand-col-votes" id="flavio-col-votos">0 votos</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- LEGENDA EXCLUSIVA PARA O DRAWER MOBILE (QUANDO ABERTO) -->
+            <div class="sidebar-legend-card-mobile" style="display: none;">
+                <div class="s-legend-header">
+                    <span class="s-legend-title">LEGENDA DO MAPA</span>
+                    <span class="mfl-tag">VANTAGEM</span>
+                </div>
+                <div class="mfl-bar" style="height: 14px;">
+                    <div class="mfl-step" style="background: #991b1b;"></div>
+                    <div class="mfl-step" style="background: #dc2626;"></div>
+                    <div class="mfl-step" style="background: #f87171;"></div>
+                    <div class="mfl-step" style="background: #94a3b8;"></div>
+                    <div class="mfl-step" style="background: #60a5fa;"></div>
+                    <div class="mfl-step" style="background: #2563eb;"></div>
+                    <div class="mfl-step" style="background: #1e3a8a;"></div>
+                </div>
+                <div class="mfl-labels" style="font-size: 0.74rem;">
+                    <span class="leg-lula">◄ Lula (+30%)</span>
+                    <span class="leg-empate">Empate</span>
+                    <span class="leg-flavio">Flávio (+30%) ►</span>
+                </div>
+            </div>
+
+            <!-- BUSCA DE MUNICÍPIO -->
+            <div class="search-container">
+                <input type="text" id="search-input" placeholder="Buscar município (ex: Fortaleza, Sobral)..." autocomplete="off">
+                <button id="search-btn">
+                    <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                </button>
+            </div>
+            <ul id="search-results" class="search-results hidden"></ul>
+        </div>
+    </div>
+
+        <!-- CARD FLUTUANTE PRÓPRIO DA LEGENDA NO MAPA (PC / DESKTOP) -->
+    <div class="map-floating-legend" id="map-floating-legend">
+        <div class="mfl-header">
+            <span class="mfl-title">VANTAGEM DE VOTOS VÁLIDOS</span>
+            <span class="mfl-tag">POR MUNICÍPIO</span>
+        </div>
+        <div class="mfl-bar">
+            <div class="mfl-step" style="background: #991b1b;" title="Lula +30 p.p."></div>
+            <div class="mfl-step" style="background: #dc2626;" title="Lula +15 p.p."></div>
+            <div class="mfl-step" style="background: #f87171;" title="Lula +5 p.p."></div>
+            <div class="mfl-step" style="background: #94a3b8;" title="Empate / Sem Apuração"></div>
+            <div class="mfl-step" style="background: #60a5fa;" title="Flávio +5 p.p."></div>
+            <div class="mfl-step" style="background: #2563eb;" title="Flávio +15 p.p."></div>
+            <div class="mfl-step" style="background: #1e3a8a;" title="Flávio +30 p.p."></div>
+        </div>
+        <div class="mfl-labels">
+            <span class="leg-lula">◄ Lula (+30%)</span>
+            <span class="leg-empate">Empate (0%)</span>
+            <span class="leg-flavio">Flávio (+30%) ►</span>
+        </div>
+        <div class="mfl-subtext">Cores indicam a vantagem de votos apurados no município</div>
+    </div>
+
+    <!-- BOTÕES FLUTUANTES -->
+    <div class="floating-controls">
+        <button id="btn-home" class="floating-btn" title="Foco Brasil Completo" onclick="focarBrasil()">
+            <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+        </button>
+        <button id="btn-help" class="floating-btn" title="Como ler o mapa" onclick="toggleHelpModal()">
+            <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+        </button>
+    </div>
+
+    <!-- MODAL DE AJUDA / LEGENDA -->
+    <div id="help-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Como ler o mapa</h2>
+                <button class="close-btn" onclick="toggleHelpModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p style="font-size: 0.95rem; margin-bottom: 12px; color: #444;">
+                    O mapa exibe o resultado da apuração do 2º Turno em cada um dos <strong>5.571 municípios do Brasil</strong>.
+                </p>
+                
+                <h3 style="font-size: 0.85rem; font-weight: 700; text-transform: uppercase; margin-bottom: 6px;">Cores e Margem de Vitória</h3>
+                <div class="legend-scale">
+                    <div class="scale-step" style="background: #991b1b; border-radius: 4px 0 0 4px;" title="Lula +30 p.p."></div>
+                    <div class="scale-step" style="background: #b91c1c;"></div>
+                    <div class="scale-step" style="background: #dc2626;"></div>
+                    <div class="scale-step" style="background: #ef4444;"></div>
+                    <div class="scale-step" style="background: #f87171;"></div>
+                    <div class="scale-step" style="background: #94a3b8;" title="Empate"></div>
+                    <div class="scale-step" style="background: #60a5fa;"></div>
+                    <div class="scale-step" style="background: #3b82f6;"></div>
+                    <div class="scale-step" style="background: #2563eb;"></div>
+                    <div class="scale-step" style="background: #1d4ed8;"></div>
+                    <div class="scale-step" style="background: #1e3a8a; border-radius: 0 4px 4px 0;" title="Flávio +30 p.p."></div>
+                </div>
+                <div class="legend-axis">
+                    <span style="color:#b2182b;font-weight:700;">Lula +30 p.p.</span>
+                    <span style="color:#777;">Empate</span>
+                    <span style="color:#2166ac;font-weight:700;">Flávio +30 p.p.</span>
+                </div>
+
+                <p style="font-size: 0.85rem; color: #666; line-height: 1.4;">
+                    • <strong>Clique ou toque</strong> em qualquer município para ver os votos e porcentagens detalhadas.<br>
+                    • Utilize a <strong>busca</strong> para encontrar qualquer cidade do Brasil rapidamente.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- POPUP / CARD DE DETALHES DO MUNICÍPIO -->
+    <div id="custom-tooltip" class="hidden">
+        <div class="op-tooltip" id="tooltip-inner">
+            <button class="tt-close-btn" onclick="fecharTooltip()" title="Fechar">&times;</button>
+            <div class="tt-header-row">
+                <div>
+                    <div class="tt-title" id="tt-mun-nome">Fortaleza</div>
+                    <div class="tt-subtitle" id="tt-mun-uf">Ceará</div>
+                </div>
+                <div class="tt-urnas-pill">
+                    Urnas: <strong id="tt-urnas-val">0,00%</strong>
+                </div>
+            </div>
+            <div class="margin-badge" id="tt-diff-badge">Aguardando apuração</div>
+
+            <!-- Lula -->
+            <div class="tt-cand-row">
+                <img src="lula.jpg" class="cand-photo-maj lula-border" alt="Lula">
+                <div class="tt-cand-info">
+                    <span class="cand-name" style="color: #b2182b;">Lula (PT)</span>
+                    <span id="tt-lula-vals">0,00% (0)</span>
+                </div>
+            </div>
+            <div class="tt-bar-bg">
+                <div class="tt-bar-fill" id="tt-bar-lula" style="width: 50%; background: #b2182b;"></div>
+            </div>
+
+            <!-- Flávio -->
+            <div class="tt-cand-row">
+                <img src="flavio.jpg" class="cand-photo-maj flavio-border" alt="Flávio Bolsonaro">
+                <div class="tt-cand-info">
+                    <span class="cand-name" style="color: #2166ac;">Flávio Bolsonaro (PL)</span>
+                    <span id="tt-flavio-vals">0,00% (0)</span>
+                </div>
+            </div>
+            <div class="tt-bar-bg">
+                <div class="tt-bar-fill" id="tt-bar-flavio" style="width: 50%; background: #2166ac;"></div>
+            </div>
+
+
+        </div>
+    </div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <script>
+        // Limites Cartográficos Exatos do Brasil
+        const BRASIL_BOUNDS = [
+            [-33.75, -73.99],
+            [5.27, -34.79]
+        ];
+
+        // Centroids Oficiais dos 26 Estados + DF para os rótulos de estado (apenas SIGLA)
+        const ESTADOS_INFO = [
+            { sigla: 'AC', nome: 'Acre', lat: -9.11, lng: -70.52 },
+            { sigla: 'AL', nome: 'Alagoas', lat: -9.62, lng: -36.82 },
+            { sigla: 'AP', nome: 'Amapá', lat: 1.41, lng: -51.90 },
+            { sigla: 'AM', nome: 'Amazonas', lat: -4.00, lng: -64.00 },
+            { sigla: 'BA', nome: 'Bahia', lat: -12.50, lng: -41.70 },
+            { sigla: 'CE', nome: 'Ceará', lat: -5.20, lng: -39.30 },
+            { sigla: 'DF', nome: 'DF', lat: -15.78, lng: -47.80 },
+            { sigla: 'ES', nome: 'Espírito Santo', lat: -19.57, lng: -40.67 },
+            { sigla: 'GO', nome: 'Goiás', lat: -15.98, lng: -50.14 },
+            { sigla: 'MA', nome: 'Maranhão', lat: -5.42, lng: -45.44 },
+            { sigla: 'MT', nome: 'Mato Grosso', lat: -12.64, lng: -55.42 },
+            { sigla: 'MS', nome: 'Mato Grosso do Sul', lat: -20.51, lng: -54.54 },
+            { sigla: 'MG', nome: 'Minas Gerais', lat: -18.10, lng: -44.38 },
+            { sigla: 'PA', nome: 'Pará', lat: -3.79, lng: -52.48 },
+            { sigla: 'PB', nome: 'Paraíba', lat: -7.12, lng: -36.72 },
+            { sigla: 'PR', nome: 'Paraná', lat: -24.89, lng: -51.55 },
+            { sigla: 'PE', nome: 'Pernambuco', lat: -8.38, lng: -37.86 },
+            { sigla: 'PI', nome: 'Piauí', lat: -7.38, lng: -42.49 },
+            { sigla: 'RJ', nome: 'Rio de Janeiro', lat: -22.25, lng: -42.66 },
+            { sigla: 'RN', nome: 'Rio Grande do Norte', lat: -5.81, lng: -36.59 },
+            { sigla: 'RS', nome: 'Rio Grande do Sul', lat: -29.75, lng: -53.15 },
+            { sigla: 'RO', nome: 'Rondônia', lat: -10.90, lng: -62.80 },
+            { sigla: 'RR', nome: 'Roraima', lat: 2.15, lng: -61.39 },
+            { sigla: 'SC', nome: 'Santa Catarina', lat: -27.45, lng: -50.95 },
+            { sigla: 'SP', nome: 'São Paulo', lat: -22.19, lng: -48.79 },
+            { sigla: 'SE', nome: 'Sergipe', lat: -10.57, lng: -37.45 },
+            { sigla: 'TO', nome: 'Tocantins', lat: -10.25, lng: -48.35 }
+        ];
+
+        // 27 Capitais do Brasil para priorização na busca
+        const CAPITAIS_IBGE = new Set([
+            '1100205', '1200401', '1302603', '1400100', '1501402', '1600303', '1721000',
+            '2111300', '2211001', '2304400', '2408102', '2507507', '2611606', '2704302',
+            '2800308', '2927408', '3106200', '3205309', '3304557', '3550308', '4106902',
+            '4205407', '4314902', '5002704', '5103403', '5208707', '5300108'
+        ]);
+
+        // Inicialização do Mapa Leaflet com Canvas GPU
+        // Renderer Canvas com buffer de 50% para pan suave sem redesenhar
+        const canvasRenderer = L.canvas({
+            padding: 0.5,
+            tolerance: 4
+        });
+
+        const map = L.map('map', {
+            preferCanvas: true,
+            renderer: canvasRenderer,
+            zoomControl: false,
+            attributionControl: false,
+            minZoom: 3.8,
+            maxZoom: 14,
+            maxBounds: [[14, -84], [-38, -26]],
+            maxBoundsViscosity: 0.9,
+            wheelDebounceTime: 80,
+            wheelPxPerZoomLevel: 120,
+            zoomSnap: 0.5,
+            zoomDelta: 1,
+            inertia: true,
+            inertiaDeceleration: 3000
+        });
+
+        L.control.zoom({ position: 'topright' }).addTo(map);
+
+        const bgLabelsPane = map.createPane('bgLabelsPane');
+        bgLabelsPane.style.zIndex = 280;
+        bgLabelsPane.style.pointerEvents = 'none';
+
+        const stateLabelsPane = map.createPane('stateLabelsPane');
+        stateLabelsPane.style.zIndex = 650;
+        stateLabelsPane.style.pointerEvents = 'none';
+
+        // Pane exclusivo para o destaque do município selecionado/hover (zero redraw na base de 5.564 municípios!)
+        const highlightPane = map.createPane('highlightPane');
+        highlightPane.style.zIndex = 610;
+        highlightPane.style.pointerEvents = 'none';
+
+        const highlightLayer = L.geoJSON(null, {
+            pane: 'highlightPane',
+            style: {
+                weight: 2.8,
+                color: '#FCA311',
+                fillColor: '#FCA311',
+                fillOpacity: 0.3,
+                lineCap: 'round',
+                lineJoin: 'round'
+            }
+        }).addTo(map);
+
+        // Tooltip único compartilhado para hover (elimina 5.564 instâncias e 38.000 listeners)
+        const sharedHoverTooltip = L.tooltip({
+            direction: 'top',
+            className: 'mun-hover-tooltip',
+            offset: [0, -10]
+        });
+
+        function updateZoomClasses() {
+            const z = Math.round(map.getZoom());
+            const mapEl = document.getElementById('map');
+            if (!mapEl) return;
+            mapEl.className = mapEl.className.replace(/\bzoom-\d+\b/g, '').trim();
+            mapEl.classList.add(`zoom-${z}`);
+        }
+        map.on('zoom', updateZoomClasses);
+        map.on('zoomend', updateZoomClasses);
+        updateZoomClasses();
+
+        // BASEMAP EDITORIAL ESRI LIGHT GRAY
+        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
+            attribution: 'Tiles &copy; Esri',
+            maxZoom: 16
+        }).addTo(map);
+
+        let geoLayer = null;
+        let stateBordersLayer = null;
+        let apuracaoDados = null;
+        const layerByIbge = {};
+        const munSearchIndex = [];
+
+        const tooltip = document.getElementById('custom-tooltip');
+        let selectedLatLng = null;
+
+        // Enquadramento Perfeito do Brasil
+        function focarBrasil() {
+            const isMobile = window.innerWidth <= 768;
+            if (isMobile) {
+                map.fitBounds(BRASIL_BOUNDS, {
+                    paddingTopLeft: [15, 10],
+                    paddingBottomRight: [10, 175],
+                    animate: true
+                });
+            } else {
+                map.fitBounds(BRASIL_BOUNDS, {
+                    paddingTopLeft: [350, 20],
+                    paddingBottomRight: [30, 20],
+                    animate: true
+                });
+            }
+        }
+
+        // Cores dos Municípios
+        function getColor(lulaPct, flavioPct, totalValidos) {
+            if (!totalValidos || totalValidos === 0) return '#e2e8f0';
+
+            const diff = lulaPct - flavioPct;
+            if (Math.abs(diff) < 0.5) return '#94a3b8'; // Quase empate
+
+            if (diff > 0) {
+                // Lula Vencendo
+                if (diff >= 30) return '#991b1b';
+                if (diff >= 20) return '#b91c1c';
+                if (diff >= 10) return '#dc2626';
+                if (diff >= 5)  return '#ef4444';
+                return '#f87171';
+            } else {
+                // Flávio Vencendo
+                const bDiff = Math.abs(diff);
+                if (bDiff >= 30) return '#1e3a8a';
+                if (bDiff >= 20) return '#1d4ed8';
+                if (bDiff >= 10) return '#2563eb';
+                if (bDiff >= 5)  return '#3b82f6';
+                return '#60a5fa';
+            }
+        }
+
+        function styleFeature(feature) {
+            const ibge = feature.properties.id;
+            let lulaPct = 0, flavioPct = 0, total = 0;
+
+            if (apuracaoDados && apuracaoDados.municipios && apuracaoDados.municipios[ibge]) {
+                const d = apuracaoDados.municipios[ibge];
+                total = d[4];
+                lulaPct = d[5];
+                flavioPct = d[6];
+            }
+
+            return {
+                fillColor: getColor(lulaPct, flavioPct, total),
+                weight: 0.75,
+                opacity: 0.85,
+                color: '#94a3b8',
+                fillOpacity: 0.92
+            };
+        }
+
+        // Exibe Tooltip / Card
+        function exibirDetalhes(ibge, nome, uf, latlng) {
+            document.getElementById('tt-mun-nome').innerText = nome;
+            document.getElementById('tt-mun-uf').innerText = uf || '';
+
+            if (apuracaoDados && apuracaoDados.municipios && apuracaoDados.municipios[ibge]) {
+                const d = apuracaoDados.municipios[ibge];
+                const lVotos = d[2];
+                const bVotos = d[3];
+                const total = d[4];
+                const lPct = d[5];
+                const bPct = d[6];
+                const urnas = d[7];
+                const diffVotos = Math.abs(lVotos - bVotos);
+                const diffPct = Math.abs(lPct - bPct).toFixed(2).replace('.', ',');
+
+                document.getElementById('tt-lula-vals').innerHTML = lPct.toFixed(2).replace('.', ',') + '% <span style="font-size:0.75rem;color:#777;">(' + Number(lVotos).toLocaleString('pt-BR') + ')</span>';
+                document.getElementById('tt-flavio-vals').innerHTML = bPct.toFixed(2).replace('.', ',') + '% <span style="font-size:0.75rem;color:#777;">(' + Number(bVotos).toLocaleString('pt-BR') + ')</span>';
+                document.getElementById('tt-urnas-val').innerText = urnas;
+
+                if (total > 0) {
+                    const lRatio = (lVotos / total) * 100;
+                    const bRatio = (bVotos / total) * 100;
+                    document.getElementById('tt-bar-lula').style.width = lRatio + '%';
+                    document.getElementById('tt-bar-flavio').style.width = bRatio + '%';
+
+                    if (lPct > bPct) {
+                        document.getElementById('tt-diff-badge').innerHTML = 'Lula lidera por <strong>' + diffPct + ' p.p.</strong> (' + diffVotos.toLocaleString('pt-BR') + ' votos)';
+                        document.getElementById('tooltip-inner').style.borderLeftColor = '#b2182b';
+                    } else if (bPct > lPct) {
+                        document.getElementById('tt-diff-badge').innerHTML = 'Flávio lidera por <strong>' + diffPct + ' p.p.</strong> (' + diffVotos.toLocaleString('pt-BR') + ' votos)';
+                        document.getElementById('tooltip-inner').style.borderLeftColor = '#2166ac';
+                    } else {
+                        document.getElementById('tt-diff-badge').innerText = 'Empate técnico';
+                        document.getElementById('tooltip-inner').style.borderLeftColor = '#94a3b8';
+                    }
+                } else {
+                    document.getElementById('tt-bar-lula').style.width = '50%';
+                    document.getElementById('tt-bar-flavio').style.width = '50%';
+                    document.getElementById('tt-diff-badge').innerText = '0 votos computados';
+                    document.getElementById('tooltip-inner').style.borderLeftColor = '#111';
+                }
+            } else {
+                document.getElementById('tt-lula-vals').innerText = '0,00% (0)';
+                document.getElementById('tt-flavio-vals').innerText = '0,00% (0)';
+                document.getElementById('tt-urnas-val').innerText = '0,00%';
+                document.getElementById('tt-diff-badge').innerText = 'Aguardando apuração';
+                document.getElementById('tooltip-inner').style.borderLeftColor = '#111';
+            }
+
+            // Posicionamento inteligente
+            if (window.innerWidth <= 768) {
+                tooltip.style.left = '50%';
+                tooltip.style.top = 'auto';
+                tooltip.style.bottom = '180px';
+                tooltip.style.transform = 'translateX(-50%)';
+            } else {
+                tooltip.style.bottom = 'auto';
+                if (latlng) {
+                    selectedLatLng = latlng;
+                    const pt = map.latLngToContainerPoint(latlng);
+                    const cardW = 280;
+                    const clampedX = Math.max(cardW / 2 + 10, Math.min(window.innerWidth - cardW / 2 - 10, pt.x));
+                    const clampedY = Math.max(10, Math.min(window.innerHeight - 200, pt.y - 15));
+                    tooltip.style.left = clampedX + 'px';
+                    tooltip.style.top = clampedY + 'px';
+                    tooltip.style.transform = 'translate(-50%, 0)';
+                } else {
+                    tooltip.style.left = '50%';
+                    tooltip.style.top = '50%';
+                    tooltip.style.transform = 'translate(-50%, -50%)';
+                }
+            }
+
+            tooltip.classList.remove('hidden');
+        }
+
+        window.fecharTooltip = function() {
+            tooltip.classList.add('hidden');
+            selectedLatLng = null;
+            highlightLayer.clearLayers();
+        };
+
+        map.on('move', () => {
+            if (window.innerWidth <= 768) return;
+            if (selectedLatLng && !tooltip.classList.contains('hidden')) {
+                const pt = map.latLngToContainerPoint(selectedLatLng);
+                const cardW = 280;
+                const clampedX = Math.max(cardW / 2 + 10, Math.min(window.innerWidth - cardW / 2 - 10, pt.x));
+                const clampedY = Math.max(10, Math.min(window.innerHeight - 200, pt.y - 15));
+                tooltip.style.left = clampedX + 'px';
+                tooltip.style.top = clampedY + 'px';
+            }
+        });
+
+        // Adiciona Rótulos dos Estados (27 UFs)
+        function adicionarRotulosEstados() {
+            ESTADOS_INFO.forEach(est => {
+                const icon = L.divIcon({
+                    className: 'state-label-icon',
+                    html: `
+                        <div class="state-label-box">
+                            <div class="state-abbr">${est.sigla}</div>
+                        </div>
+                    `,
+                    iconSize: [40, 24],
+                    iconAnchor: [20, 12]
+                });
+
+                L.marker([est.lat, est.lng], {
+                    icon: icon,
+                    pane: 'stateLabelsPane',
+                    interactive: false
+                }).addTo(map);
+            });
+        }
+
+        // Carrega TopoJSON e Inicializa
+        async function initMap() {
+            try {
+                // 1. Carrega dados de apuração
+                const resDados = await fetch('apuracao_brasil_tempo_real.json?t=' + Date.now());
+                apuracaoDados = await resDados.json();
+                atualizarPlacarNacional();
+
+                // 2. Carrega malha TopoJSON dos 5.571 municípios
+                const resTopo = await fetch('municipios_brasil_topo.json');
+                const topoData = await resTopo.json();
+
+                const objName = Object.keys(topoData.objects)[0];
+                const geoData = topojson.feature(topoData, topoData.objects[objName]);
+
+                // Popula índice de busca
+                geoData.features.forEach(f => {
+                    const ibge = f.properties.id;
+                    const nome = f.properties.name || f.properties.description || '';
+                    let uf = '';
+                    if (apuracaoDados && apuracaoDados.municipios && apuracaoDados.municipios[ibge]) {
+                        uf = apuracaoDados.municipios[ibge][1];
+                    }
+                    munSearchIndex.push({
+                        ibge: ibge,
+                        nome: nome,
+                        uf: uf,
+                        normNome: normalizarTexto(nome),
+                        normUf: normalizarTexto(uf),
+                        feature: f
+                    });
+                });
+
+                // Camada dos Municípios Ultra-Otimizada
+                const isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+
+                geoLayer = L.geoJSON(geoData, {
+                    renderer: canvasRenderer,
+                    style: styleFeature,
+                    onEachFeature: function(feature, layer) {
+                        const ibge = feature.properties.id;
+                        const nome = feature.properties.name || feature.properties.description || '';
+                        layerByIbge[ibge] = layer;
+
+                        const events = {
+                            click: function(e) {
+                                const munInfo = munSearchIndex.find(m => m.ibge === ibge);
+                                const center = e.target.getBounds().getCenter();
+                                highlightLayer.clearLayers();
+                                highlightLayer.addData(feature);
+                                exibirDetalhes(ibge, nome, munInfo ? munInfo.uf : '', center);
+                                map.fitBounds(e.target.getBounds(), { maxZoom: 8, animate: true });
+                            }
+                        };
+
+                        // Hover apenas para desktop com mouse (touch não tem hover e economiza processamento)
+                        if (!isTouchDevice) {
+                            events.mouseover = function(e) {
+                                sharedHoverTooltip.setContent(nome).setLatLng(e.latlng).openOn(map);
+                                highlightLayer.clearLayers();
+                                highlightLayer.addData(feature);
+                            };
+                            events.mouseout = function() {
+                                map.closeTooltip(sharedHoverTooltip);
+                                // Mantém destaque apenas se for o município selecionado
+                                if (!selectedLatLng) {
+                                    highlightLayer.clearLayers();
+                                }
+                            };
+                        }
+
+                        layer.on(events);
+                    }
+                }).addTo(map);
+
+                // Adiciona Rótulos das 27 UFs
+                adicionarRotulosEstados();
+
+                // Fronteiras Estaduais (Mesh UF)
+                try {
+                    // Fronteiras Estaduais COMPLETAS (divisas entre estados E perímetro dos estados)
+                    const stateMesh = topojson.mesh(topoData, topoData.objects[objName], (a, b) => {
+                        if (a === b) return true; // Contorno externo (litoral e fronteira)
+                        const idA = a && a.properties && a.properties.id ? a.properties.id.substring(0, 2) : '';
+                        const idB = b && b.properties && b.properties.id ? b.properties.id.substring(0, 2) : '';
+                        return idA !== idB;
+                    });
+                    stateBordersLayer = L.geoJSON(stateMesh, {
+                        renderer: canvasRenderer,
+                        style: {
+                            color: '#1e293b',
+                            weight: 1.8,
+                            opacity: 0.95,
+                            interactive: false
+                        }
+                    }).addTo(map);
+
+                    // Contorno Nacional em Destaque (Silhueta Oficial do Brasil)
+                    const brazilOuterMesh = topojson.mesh(topoData, topoData.objects[objName], (a, b) => a === b);
+                    L.geoJSON(brazilOuterMesh, {
+                        renderer: canvasRenderer,
+                        style: {
+                            color: '#0f172a',
+                            weight: 2.2,
+                            opacity: 1,
+                            interactive: false
+                        }
+                    }).addTo(map);
+                } catch (meshErr) {
+                    console.warn('Mesh estadual ignorado:', meshErr);
+                }
+
+                // Enquadra o Brasil perfeitamente
+                focarBrasil();
+
+                // Esconde a tela de carregamento suavemente
+                const overlay = document.getElementById('loading-overlay');
+                overlay.style.opacity = '0';
+                setTimeout(() => {
+                    overlay.style.visibility = 'hidden';
+                }, 400);
+
+            } catch (err) {
+                console.error('Erro na inicialização:', err);
+                const statusText = document.getElementById('loading-status-text');
+                if (statusText) statusText.innerHTML = '<pre style="color:red;font-size:11px;text-align:left;max-width:320px;overflow:auto;">' + (err.stack || err.message || err) + '</pre>';
+            }
+        }
+
+                // Atualiza Placar Nacional e Botão Flutuante
+        function atualizarPlacarNacional() {
+            if (!apuracaoDados || !apuracaoDados.nacional) return;
+            const n = apuracaoDados.nacional;
+            const lPct = n.lula_pct || '0,00%';
+            const lVotos = Number(n.lula_votos || 0).toLocaleString('pt-BR') + ' votos';
+            const bPct = n.flavio_pct || '0,00%';
+            const bVotos = Number(n.flavio_votos || 0).toLocaleString('pt-BR') + ' votos';
+            const urnasVal = n.urnas || '0,00%';
+
+            // Desktop
+            const lPctEl = document.getElementById('lula-nacional-pct');
+            if (lPctEl) lPctEl.innerText = lPct;
+            const lVotosEl = document.getElementById('lula-nacional-votos');
+            if (lVotosEl) lVotosEl.innerText = lVotos;
+
+            const bPctEl = document.getElementById('flavio-nacional-pct');
+            if (bPctEl) bPctEl.innerText = bPct;
+            const bVotosEl = document.getElementById('flavio-nacional-votos');
+            if (bVotosEl) bVotosEl.innerText = bVotos;
+
+            // Mobile Lado a Lado
+            const lColPct = document.getElementById('lula-col-pct');
+            if (lColPct) lColPct.innerText = lPct;
+            const lColVotos = document.getElementById('lula-col-votos');
+            if (lColVotos) lColVotos.innerText = lVotos;
+
+            const bColPct = document.getElementById('flavio-col-pct');
+            if (bColPct) bColPct.innerText = bPct;
+            const bColVotos = document.getElementById('flavio-col-votos');
+            if (bColVotos) bColVotos.innerText = bVotos;
+
+            // Botão Flutuante de Urnas
+            const floatUrnas = document.getElementById('floating-urnas-val');
+            if (floatUrnas) floatUrnas.innerText = urnasVal;
+            const legUrnas = document.getElementById('urnas-nacional-pct');
+            if (legUrnas) legUrnas.innerText = urnasVal;
+        }
+
+        // Polling em Tempo Real a cada 30 segundos
+        setInterval(async () => {
+            try {
+                const resDados = await fetch('apuracao_brasil_tempo_real.json?t=' + Date.now());
+                apuracaoDados = await resDados.json();
+                atualizarPlacarNacional();
+                if (geoLayer) {
+                    geoLayer.setStyle(styleFeature);
+                }
+            } catch (e) {
+                console.warn('Erro na sincronização:', e);
+            }
+        }, 30000);
+
+        // Sistema de Busca Inteligente com Ranking e Normalização de Acentos
+        const searchInput = document.getElementById('search-input');
+        const searchResults = document.getElementById('search-results');
+
+        function normalizarTexto(str) {
+            return (str || '').normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+        }
+
+        searchInput.addEventListener('input', function() {
+            const rawQ = this.value.trim();
+            const q = normalizarTexto(rawQ);
+            if (q.length < 2) {
+                searchResults.classList.add('hidden');
+                return;
+            }
+
+            const scored = [];
+            for (let i = 0; i < munSearchIndex.length; i++) {
+                const m = munSearchIndex[i];
+                const normNome = m.normNome;
+                const normUf = m.normUf;
+                
+                let score = 0;
+                if (normNome === q) {
+                    score = 1000;
+                } else if (normNome.startsWith(q)) {
+                    score = 500 - normNome.length;
+                } else if (normNome.includes(q)) {
+                    score = 200 - normNome.length;
+                } else if (normUf === q) {
+                    score = 50;
+                } else {
+                    continue;
+                }
+
+                if (CAPITAIS_IBGE.has(m.ibge)) {
+                    score += 400;
+                }
+
+                scored.push({ mun: m, score: score });
+            }
+
+            scored.sort((a, b) => b.score - a.score);
+            const matches = scored.slice(0, 8).map(s => s.mun);
+
+            if (matches.length === 0) {
+                searchResults.innerHTML = '<li style="color:#777;cursor:default;">Nenhum município encontrado</li>';
+            } else {
+                searchResults.innerHTML = matches.map(m => {
+                    const isCap = CAPITAIS_IBGE.has(m.ibge);
+                    return `<li onclick="selecionarMunicipio('${m.ibge}')">
+                        <span><strong>${m.nome}</strong> ${isCap ? '<span style="font-size:0.65rem;background:#FCA311;color:#111;padding:1px 4px;border-radius:2px;font-weight:bold;margin-left:4px;">CAPITAL</span>' : ''}</span>
+                        <span style="font-size:0.75rem;background:#eee;padding:1px 6px;border-radius:3px;font-weight:bold;color:#444;">${m.uf}</span>
+                    </li>`;
+                }).join('');
+            }
+            searchResults.classList.remove('hidden');
+        });
+
+        window.selecionarMunicipio = function(ibge) {
+            searchResults.classList.add('hidden');
+            searchInput.value = '';
+
+            if (window.innerWidth <= 768) {
+                fecharSidebar();
+            }
+
+            const mun = munSearchIndex.find(m => m.ibge === ibge);
+            if (!mun) return;
+
+            const layer = layerByIbge[ibge];
+            if (layer) {
+                const bounds = layer.getBounds();
+                map.fitBounds(bounds, { maxZoom: 10, animate: true });
+                const center = bounds.getCenter();
+                exibirDetalhes(ibge, mun.nome, mun.uf, center);
+                layer.setStyle({ weight: 3, color: '#FCA311', fillOpacity: 0.95 });
+            }
+        };
+
+        // Comportamento do Drawer Mobile Aprimorado
+        const sidebar = document.getElementById('sidebar');
+        const dragZone = document.getElementById('drawer-drag-zone');
+        const dragHint = document.getElementById('mobile-drag-hint');
+        const backdrop = document.getElementById('drawer-backdrop');
+
+        window.abrirSidebar = function() {
+            if (window.innerWidth > 768) return;
+            sidebar.classList.add('open');
+            const mobLeg = document.querySelector('.sidebar-legend-card-mobile');
+            if (mobLeg) mobLeg.style.display = 'block';
+            if (backdrop) backdrop.classList.remove('hidden');
+            if (dragHint) dragHint.innerHTML = '▼ Toque para recolher';
+            fecharTooltip();
+        };
+
+        window.fecharSidebar = function(e) {
+            if (e) e.stopPropagation();
+            sidebar.classList.remove('open');
+            const mobLeg = document.querySelector('.sidebar-legend-card-mobile');
+            if (mobLeg) mobLeg.style.display = 'none';
+            if (backdrop) backdrop.classList.add('hidden');
+            if (dragHint) dragHint.innerHTML = '▲ Toque para abrir busca';
+        };
+
+        window.toggleSidebar = function(e) {
+            if (window.innerWidth <= 768) {
+                if (e && (e.target.closest('input') || e.target.closest('.search-results') || e.target.closest('#search-btn'))) return;
+                if (sidebar.classList.contains('open')) {
+                    fecharSidebar(e);
+                } else {
+                    abrirSidebar();
+                }
+            }
+        };
+
+        if (dragZone) dragZone.addEventListener('click', toggleSidebar);
+        const brandBar = document.getElementById('sidebar-brand-bar');
+        if (brandBar) brandBar.addEventListener('click', toggleSidebar);
+
+        // Modal de Ajuda
+        window.toggleHelpModal = function() {
+            document.getElementById('help-modal').classList.toggle('hidden');
+        };
+
+        window.addEventListener('resize', () => {
+            map.invalidateSize();
+            updateZoomClasses();
+        });
+
+        initMap();
+    </script>
+</body>
+</html>
