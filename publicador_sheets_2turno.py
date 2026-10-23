@@ -1,6 +1,9 @@
 import os
 import sys
+import time
+import argparse
 import pandas as pd
+from datetime import datetime
 
 # Garante suporte a UTF-8 no terminal Windows
 if sys.platform == 'win32':
@@ -11,26 +14,34 @@ if sys.platform == 'win32':
         pass
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-if BASE_DIR not in sys.path:
-    sys.path.insert(0, BASE_DIR)
+PARENT_DIR = os.path.dirname(BASE_DIR)
+for p in [BASE_DIR, PARENT_DIR]:
+    if p not in sys.path:
+        sys.path.insert(0, p)
 
 from servidor_remoto_2turno import sincronizar_google_sheets
 
 def publicar_recortes_2turno():
     print('=' * 65)
-    print('PUBLICADOR GOOGLE SHEETS - 2º TURNO (2026)')
-    print('Planilha: Central das eleições - segundo turno')
+    print('PUBLICADOR GOOGLE SHEETS - 2? TURNO (2026)')
+    print('Planilha: Central das elei??es - segundo turno')
     print('=' * 65)
 
     csv_br_candidatos = [
         os.path.join(BASE_DIR, 'recortes_gerados_2turno', 'mapa_brasil_presidentes_2turno.csv'),
         os.path.join(BASE_DIR, 'recortes_gerados_2turno', 'presidente_br_resultado_direto.csv'),
         os.path.join(BASE_DIR, 'presidente_br_resultado_direto.csv'),
+        os.path.join(PARENT_DIR, 'recortes_gerados_2turno', 'mapa_brasil_presidentes_2turno.csv'),
+        os.path.join(PARENT_DIR, 'recortes_gerados_2turno', 'presidente_br_resultado_direto.csv'),
+        os.path.join(PARENT_DIR, 'presidente_br_resultado_direto.csv'),
     ]
     csv_ext_candidatos = [
         os.path.join(BASE_DIR, 'recortes_gerados_2turno', 'mapa_exterior_presidentes_2turno.csv'),
         os.path.join(BASE_DIR, 'recortes_gerados_2turno', 'presidente_exterior_resultado_direto.csv'),
         os.path.join(BASE_DIR, 'presidente_exterior_resultado_direto.csv'),
+        os.path.join(PARENT_DIR, 'recortes_gerados_2turno', 'mapa_exterior_presidentes_2turno.csv'),
+        os.path.join(PARENT_DIR, 'recortes_gerados_2turno', 'presidente_exterior_resultado_direto.csv'),
+        os.path.join(PARENT_DIR, 'presidente_exterior_resultado_direto.csv'),
     ]
 
     df_br = None
@@ -59,10 +70,35 @@ def publicar_recortes_2turno():
 
     sucesso = sincronizar_google_sheets(df_brasil=df_br, df_exterior=df_ext)
     if sucesso:
-        print('\n✔ Publicação no Google Sheets concluída com 100% de sucesso!')
+        print('\n? Publica??o no Google Sheets conclu?da com 100% de sucesso!')
     else:
-        print('\n✖ Houve falha na sincronização com o Google Sheets.')
+        print('\n? Houve falha na sincroniza??o com o Google Sheets.')
     return sucesso
 
+def rodar_loop(intervalo_segundos=60):
+    print('=' * 65)
+    print('PUBLICADOR GOOGLE SHEETS - MODO CONT?NUO (TEMPO REAL)')
+    print(f'Intervalo entre ciclos: {intervalo_segundos} segundos')
+    print('=' * 65)
+    ciclo = 1
+    while True:
+        hora_atual = datetime.now().strftime('%H:%M:%S')
+        print(f"\n[{hora_atual}] >>> CICLO DE PUBLICA??O #{ciclo} <<<")
+        try:
+            publicar_recortes_2turno()
+        except Exception as e:
+            print(f"[ERRO] Falha na publica??o #{ciclo}: {e}")
+        print(f"Aguardando {intervalo_segundos}s para a pr?xima publica??o...")
+        ciclo += 1
+        time.sleep(intervalo_segundos)
+
 if __name__ == '__main__':
-    publicar_recortes_2turno()
+    parser = argparse.ArgumentParser(description='Publicador Google Sheets 2? Turno')
+    parser.add_argument('--once', action='store_true', help='Executa apenas uma publica??o')
+    parser.add_argument('--intervalo', type=int, default=60, help='Intervalo em segundos entre ciclos (padr?o: 60)')
+    args = parser.parse_args()
+
+    if args.once:
+        publicar_recortes_2turno()
+    else:
+        rodar_loop(intervalo_segundos=args.intervalo)

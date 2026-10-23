@@ -256,5 +256,32 @@ def coletar_municipios_brasil(max_workers=40):
     
     return df
 
+def rodar_loop(intervalo_segundos=60, workers=40):
+    print("=" * 70)
+    print("COLETOR PRESIDENCIAL MUNICIPAL - MODO CONT?NUO (TEMPO REAL)")
+    print(f"Intervalo entre ciclos: {intervalo_segundos} segundos | Workers: {workers}")
+    print("=" * 70)
+    ciclo = 1
+    while True:
+        hora_atual = datetime.now().strftime('%H:%M:%S')
+        print(f"\n[{hora_atual}] >>> CICLO DE COLETA MUNICIPAL #{ciclo} <<<")
+        try:
+            coletar_municipios_brasil(max_workers=workers)
+        except Exception as e:
+            print(f"[ERRO] Falha na coleta municipal #{ciclo}: {e}")
+        print(f"Aguardando {intervalo_segundos}s para o pr?ximo ciclo de coleta...")
+        ciclo += 1
+        time.sleep(intervalo_segundos)
+
 if __name__ == "__main__":
-    df_resultado = coletar_municipios_brasil(max_workers=40)
+    import argparse
+    parser = argparse.ArgumentParser(description="Coletor Munic?pios 2? Turno")
+    parser.add_argument("--once", action="store_true", help="Executa apenas uma varredura")
+    parser.add_argument("--intervalo", type=int, default=60, help="Intervalo em segundos entre ciclos (padr?o: 60)")
+    parser.add_argument("--workers", type=int, default=40, help="N?mero de conex?es simult?neas (padr?o: 40)")
+    args = parser.parse_args()
+
+    if args.once:
+        coletar_municipios_brasil(max_workers=args.workers)
+    else:
+        rodar_loop(intervalo_segundos=args.intervalo, workers=args.workers)
