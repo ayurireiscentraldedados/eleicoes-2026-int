@@ -661,7 +661,7 @@ def sincronizar_google_sheets(df_dados=None, df_brasil=None, df_exterior=None):
             except Exception as e_reg:
                 adicionar_log(f"Aviso sync Mapa por região: {e_reg}", "aviso")
 
-            # C. Mapa por estado -> Intervalo F2:I28 (4 colunas)
+            # C. Mapa por estado -> Intervalo G2:J28 (4 colunas)
             try:
                 ws_est = sh.worksheet('Mapa por estado')
                 est_rows = ws_est.get_all_values()[1:]
@@ -697,7 +697,7 @@ def sincronizar_google_sheets(df_dados=None, df_brasil=None, df_exterior=None):
                         f"{urnas_est:.2f}%".replace('.', ',')
                     ])
                 if payload_est:
-                    ws_est.update(range_name=f'F2:I{len(payload_est)+1}', values=payload_est, value_input_option='USER_ENTERED')
+                    ws_est.update(range_name=f'G2:J{len(payload_est)+1}', values=payload_est, value_input_option='USER_ENTERED')
                     total_linhas_atualizadas += len(payload_est)
             except Exception as e_est:
                 adicionar_log(f"Aviso sync Mapa por estado: {e_est}", "aviso")
