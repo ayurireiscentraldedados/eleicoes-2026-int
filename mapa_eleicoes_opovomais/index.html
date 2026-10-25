@@ -1664,10 +1664,10 @@
             renderer: canvasRenderer,
             zoomControl: false,
             attributionControl: false,
-            minZoom: 3.8,
+            minZoom: 3.2,
             maxZoom: 14,
-            maxBounds: [[14, -84], [-38, -26]],
-            maxBoundsViscosity: 0.9,
+            maxBounds: [[26, -92], [-45, -24]],
+            maxBoundsViscosity: 0.4,
             wheelDebounceTime: 80,
             wheelPxPerZoomLevel: 120,
             zoomSnap: 0.5,
@@ -2227,6 +2227,39 @@
             map.invalidateSize();
             updateZoomClasses();
         });
+
+
+        // Suporte a arraste através do botão das urnas no mobile
+        const urnasPillEl = document.getElementById('floating-urnas-pill');
+        if (urnasPillEl) {
+            let startX = 0, startY = 0, isDragging = false;
+            urnasPillEl.addEventListener('touchstart', (e) => {
+                if (e.touches.length === 1) {
+                    startX = e.touches[0].clientX;
+                    startY = e.touches[0].clientY;
+                    isDragging = false;
+                }
+            }, { passive: true });
+
+            urnasPillEl.addEventListener('touchmove', (e) => {
+                if (e.touches.length === 1) {
+                    const dx = e.touches[0].clientX - startX;
+                    const dy = e.touches[0].clientY - startY;
+                    if (Math.abs(dx) > 4 || Math.abs(dy) > 4) {
+                        isDragging = true;
+                        map.panBy([-dx, -dy], { animate: false });
+                        startX = e.touches[0].clientX;
+                        startY = e.touches[0].clientY;
+                    }
+                }
+            }, { passive: true });
+
+            urnasPillEl.addEventListener('touchend', (e) => {
+                if (!isDragging) {
+                    focarBrasil();
+                }
+            });
+        }
 
         initMap();
     </script>
