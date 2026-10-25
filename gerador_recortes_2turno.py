@@ -1,3 +1,4 @@
+import json
 import os
 import sys
 import time
@@ -128,6 +129,96 @@ def processar_recortes_2turno():
     path_cap = os.path.join(PASTA_RECORTES, 'recorte_capitais_2turno.csv')
     df_capitais.to_csv(path_cap, index=False, sep=';', encoding='utf-8-sig')
     print(f'  -> [4/4] Recorte das 27 capitais salvo: {path_cap}')
+
+    # 5. JSON de Alta Performance para o Mapa Interativo O POVO+ (Five News)
+    try:
+        col_bolso = [c for c in df.columns if 'bolsonaro' in c.lower()][0]
+        col_mun = [c for c in df.columns if 'munic' in c.lower()][0]
+        tot_col_nome = 'Total_Validos' if 'Total_Validos' in df.columns else 'Total'
+        
+        urnas_br = '0,00%'
+        col_sec_tot = [c for c in df.columns if 'totalizadas' in c.lower()]
+        col_sec_all = [c for c in df.columns if 'se' in c.lower() and 'total' in c.lower() and 'totalizadas' not in c.lower()]
+        if col_sec_tot and col_sec_all:
+            s_tot = float(df[col_sec_tot[0]].sum())
+            s_all = float(df[col_sec_all[0]].sum())
+            if s_all > 0:
+                urnas_br = f"{(s_tot / s_all * 100):.2f}%".replace('.', ',')
+        elif 'Urnas_Pct' in df.columns:
+            urnas_br = str(df['Urnas_Pct'].iloc[0])
+
+        payload_mapa = {
+            'nacional': {
+                'lula_votos': int(df['Lula'].sum()),
+                'flavio_votos': int(df[col_bolso].sum()),
+                'total': int(df[tot_col_nome].sum()),
+                'urnas': urnas_br,
+                'atualizado_em': datetime.now().strftime('%H:%M:%S')
+            },
+            'municipios': {}
+        }
+        tot_val = payload_mapa['nacional']['total']
+        lula_tot = payload_mapa['nacional']['lula_votos']
+        flavio_tot = payload_mapa['nacional']['flavio_votos']
+        if tot_val > 0:
+            payload_mapa['nacional']['lula_pct'] = f"{(lula_tot / tot_val * 100):.2f}%".replace('.', ',')
+            payload_mapa['nacional']['flavio_pct'] = f"{(flavio_tot / tot_val * 100):.2f}%".replace('.', ',')
+        else:
+            payload_mapa['nacional']['lula_pct'] = "0,00%"
+            payload_mapa['nacional']['flavio_pct'] = "0,00%"
+
+        # Cache anti-regressão do JSON do mapa
+        mapa_anterior = {}
+        caminho_mapa_antigo = os.path.join(BASE_DIR, 'mapa_eleicoes_opovomais', 'apuracao_brasil_tempo_real.json')
+        if os.path.exists(caminho_mapa_antigo):
+            try:
+                with open(caminho_mapa_antigo, 'r', encoding='utf-8') as f_old:
+                    old_data = json.load(f_old)
+                    mapa_anterior = old_data.get('municipios', {})
+            except Exception:
+                pass
+
+        for _, r in df.iterrows():
+            ibge = str(r['cod_ibge7']).strip()
+            l2 = int(r.get('Lula', 0))
+            b2 = int(r.get(col_bolso, 0))
+            t2 = l2 + b2
+            urnas = str(r.get('Urnas_Pct', '0,00%')).strip()
+
+            # REGRA DE NÃO-REGRESSÃO NO MAPA:
+            # Se a linha do CSV vier zerada mas o mapa já tinha votos para o município, PRESERVA!
+            if t2 == 0 and ibge in mapa_anterior:
+                old_m = mapa_anterior[ibge]
+                if len(old_m) >= 5 and int(old_m[4]) > 0:
+                    payload_mapa['municipios'][ibge] = old_m
+                    continue
+
+            l_pct = round((l2 / t2 * 100), 2) if t2 > 0 else 0.0
+            b_pct = round((b2 / t2 * 100), 2) if t2 > 0 else 0.0
+            payload_mapa['municipios'][ibge] = [
+                str(r[col_mun]),
+                str(r['UF_sigla']),
+                l2,
+                b2,
+                t2,
+                l_pct,
+                b_pct,
+                urnas
+            ]
+
+        # Salva na pasta do mapa
+        caminhos_json = [
+            os.path.join(BASE_DIR, 'mapa_eleicoes_opovomais', 'apuracao_brasil_tempo_real.json'),
+            os.path.join(os.path.dirname(BASE_DIR), 'mapa_eleicoes_opovomais', 'apuracao_brasil_tempo_real.json'),
+            os.path.join(BASE_DIR, 'apuracao_brasil_tempo_real.json')
+        ]
+        for c_path in caminhos_json:
+            if os.path.exists(os.path.dirname(c_path)):
+                with open(c_path, 'w', encoding='utf-8') as f_out:
+                    json.dump(payload_mapa, f_out, separators=(',', ':'), ensure_ascii=False)
+        print('  -> [5/5] JSON em tempo real do mapa gerado com sucesso!')
+    except Exception as e_mapa:
+        print(f'  [AVISO] Falha ao gerar JSON do mapa: {e_mapa}')
 
 
     print('\n✔ Todos os recortes foram gerados e validados com sucesso!')

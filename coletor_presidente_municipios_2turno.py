@@ -87,6 +87,38 @@ def carregar_dicionario_municipios():
     df.to_csv(DICIONARIO_PATH, index=False, encoding="utf-8-sig")
     return df
 
+MEMORIA_MUNICIPIOS = {}
+
+def carregar_memoria_inicial():
+    """Carrega dados anteriores dos CSVs para a memória persistente (regra de não-regressão)."""
+    global MEMORIA_MUNICIPIOS
+    caminhos = [
+        os.path.join(PASTA_RECORTES, "presidente_br_resultado_direto.csv"),
+        os.path.join(BASE_DIR, "presidente_br_resultado_direto.csv"),
+        os.path.join(PASTA_RECORTES, "mapa_brasil_presidentes_2turno.csv")
+    ]
+    for p in caminhos:
+        if os.path.exists(p):
+            try:
+                df_ant = pd.read_csv(p, sep=None, engine='python', encoding='utf-8-sig')
+                for _, r in df_ant.iterrows():
+                    ibge = str(r.get('cod_ibge7', '')).strip()
+                    if ibge and ibge not in MEMORIA_MUNICIPIOS:
+                        d = r.to_dict()
+                        for k in ['Lula', 'Flávio Bolsonaro', 'Total_Validos', 'Seções_Totalizadas', 'Seções_Total',
+                                  'Brancos', 'Nulos', 'Abstencoes', 'Comparecimento', 'Total_Aptos']:
+                            if k in d:
+                                try:
+                                    d[k] = int(float(str(d[k]).replace(',', '.')))
+                                except Exception:
+                                    d[k] = 0
+                        MEMORIA_MUNICIPIOS[ibge] = d
+                if len(MEMORIA_MUNICIPIOS) > 0:
+                    print(f"✔ Memória anti-regressão carregada com {len(MEMORIA_MUNICIPIOS)} municípios do arquivo: {os.path.basename(p)}")
+                    break
+            except Exception as e:
+                pass
+
 def coletar_municipios_brasil(max_workers=40):
     """
     Executa a coleta concorrente de todos os 5.571 municípios do Brasil para Presidente no 2º Turno.
@@ -94,6 +126,9 @@ def coletar_municipios_brasil(max_workers=40):
     """
     df_dicionario = carregar_dicionario_municipios()
     total_mun = len(df_dicionario)
+    
+    if len(MEMORIA_MUNICIPIOS) == 0:
+        carregar_memoria_inicial()
     
     print("=" * 68)
     print(f"APURAÇÃO PRESIDENCIAL POR MUNICÍPIO - 2º TURNO (TSE {ELEICAO_ID})")
@@ -110,6 +145,8 @@ def coletar_municipios_brasil(max_workers=40):
     resultados = []
     
     def fetch_item(row):
+        ibge_str = str(row['cod_ibge7']).strip()
+        antigo = MEMORIA_MUNICIPIOS.get(ibge_str)
         sigla = str(row['UF_sigla']).lower()
         cd_tse = str(row['cod_mun']).zfill(5)
         url = f"https://resultados.tse.jus.br/oficial/ele2026/{ELEICAO_ID}/dados/{sigla}/{sigla}{cd_tse}-{CARGO_ID}-e00{ELEICAO_ID}-u.json"
@@ -163,6 +200,17 @@ def coletar_municipios_brasil(max_workers=40):
                 ab_pct = (abst / aptos * 100) if aptos > 0 else 0.0
                 co_pct = (comp / aptos * 100) if aptos > 0 else 0.0
                 
+                # REGRA DE NÃO-REGRESSÃO (ANTI-ZERAR):
+                if antigo:
+                    antigo_st = int(antigo.get('Seções_Totalizadas', 0))
+                    antigo_validos = int(antigo.get('Total_Validos', 0))
+                    # Se o TSE retornar 0 votos/seções, mas o município já tinha apuração, PRESERVA!
+                    if (total_validos == 0 or st == 0) and (antigo_validos > 0 or antigo_st > 0):
+                        return antigo
+                    # Se o TSE retornar menos seções apuradas do que já tínhamos (regressão), PRESERVA!
+                    if st < antigo_st and antigo_st > 0:
+                        return antigo
+
                 if total_validos == 0:
                     vencedor = 'Aguardando'
                 elif lula > flavio:
@@ -201,6 +249,10 @@ def coletar_municipios_brasil(max_workers=40):
         except Exception:
             pass
             
+        # Se houve falha de rede/timeout, mas o município já tinha apuração, MANTÉM OS DADOS ANTERIORES!
+        if antigo and (int(antigo.get('Total_Validos', 0)) > 0 or int(antigo.get('Seções_Totalizadas', 0)) > 0):
+            return antigo
+
         return {
             'cod_ibge7': str(row['cod_ibge7']),
             'cod_mun': cd_tse,
@@ -234,6 +286,9 @@ def coletar_municipios_brasil(max_workers=40):
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
         for i, res in enumerate(executor.map(fetch_item, linhas), 1):
             resultados.append(res)
+            ibge_key = str(res.get('cod_ibge7', '')).strip()
+            if ibge_key:
+                MEMORIA_MUNICIPIOS[ibge_key] = res
             if i % 1000 == 0 or i == total_mun:
                 taxa = i / (time.time() - t0)
                 print(f"  -> {i}/{total_mun} municípios apurados ({taxa:.1f} mun/s)...")

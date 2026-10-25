@@ -67,6 +67,25 @@ def carregar_dicionario_exterior():
     df.to_csv(DICIONARIO_PATH, index=False, encoding="utf-8-sig")
     return df
 
+MEMORIA_EXTERIOR = {}
+
+def carregar_memoria_exterior():
+    global MEMORIA_EXTERIOR
+    p = os.path.join(PASTA_RECORTES, "presidente_exterior_resultado_direto.csv")
+    if not os.path.exists(p):
+        p = os.path.join(BASE_DIR, "presidente_exterior_resultado_direto.csv")
+    if os.path.exists(p):
+        try:
+            df_ant = pd.read_csv(p, sep=None, engine='python', encoding='utf-8-sig')
+            for _, r in df_ant.iterrows():
+                cid = str(r.get('cod_tse', '')).strip()
+                if cid:
+                    MEMORIA_EXTERIOR[cid] = r.to_dict()
+            if len(MEMORIA_EXTERIOR) > 0:
+                print(f"✔ Memória anti-regressão exterior carregada com {len(MEMORIA_EXTERIOR)} cidades.")
+        except Exception:
+            pass
+
 def coletar_exterior_completo(max_workers=20):
     """
     Executa a coleta de todas as 186 cidades no exterior + consolidado ZZ.
@@ -74,6 +93,8 @@ def coletar_exterior_completo(max_workers=20):
     """
     df_dic = carregar_dicionario_exterior()
     total_cidades = len(df_dic)
+    if len(MEMORIA_EXTERIOR) == 0:
+        carregar_memoria_exterior()
     
     print("=" * 68)
     print(f"APURAÇÃO PRESIDENCIAL NO EXTERIOR (ZZ) - 2º TURNO (TSE {ELEICAO_ID})")
@@ -101,6 +122,7 @@ def coletar_exterior_completo(max_workers=20):
 
     def fetch_cidade(row):
         cod_tse = str(row['cod_tse']).zfill(5)
+        antigo = MEMORIA_EXTERIOR.get(cod_tse)
         url = f"https://resultados.tse.jus.br/oficial/ele2026/{ELEICAO_ID}/dados/zz/zz{cod_tse}-{CARGO_ID}-e00{ELEICAO_ID}-u.json"
 
         try:
@@ -135,6 +157,11 @@ def coletar_exterior_completo(max_workers=20):
                 total_urnas = int(s_info.get('ts', 0) or 0)
                 urnas_apuradas = s_info.get('pst', '0,00%')
 
+                if antigo:
+                    antigo_val = int(antigo.get('Total_Validos', 0))
+                    if total_val == 0 and antigo_val > 0:
+                        return antigo
+
                 return {
                     'cod_tse': cod_tse,
                     'Cidade': row['Cidade'],
@@ -153,6 +180,9 @@ def coletar_exterior_completo(max_workers=20):
                 }
         except Exception:
             pass
+
+        if antigo and int(antigo.get('Total_Validos', 0)) > 0:
+            return antigo
 
         return {
             'cod_tse': cod_tse,
@@ -177,6 +207,9 @@ def coletar_exterior_completo(max_workers=20):
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
         for i, res in enumerate(executor.map(fetch_cidade, linhas), 1):
             resultados.append(res)
+            c_key = str(res.get('cod_tse', '')).zfill(5)
+            if c_key:
+                MEMORIA_EXTERIOR[c_key] = res
 
     tempo_total = time.time() - t0
     print(f"✔ Varredura das {total_cidades} cidades concluída em {tempo_total:.2f} segundos!")
