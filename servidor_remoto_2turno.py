@@ -843,52 +843,162 @@ def sincronizar_google_sheets(df_dados=None, df_brasil=None, df_exterior=None):
         if df_exterior is not None and not df_exterior.empty:
             try:
                 ws_mundi = sh.worksheet('Mapa mundi')
-                mundi_paises = ws_mundi.col_values(2)[1:]
-                df_ext_copy = df_exterior.copy()
-                df_dic_ext = carregar_dicionario_exterior()
-                df_dic_ext['cod_tse'] = df_dic_ext['cod_tse'].astype(str).str.zfill(5)
-                df_ext_copy['cod_tse'] = df_ext_copy['cod_tse'].astype(str).str.zfill(5)
-                map_pais = df_dic_ext.set_index('cod_tse')['Pais'].to_dict()
-                df_ext_copy['Pais'] = df_ext_copy['cod_tse'].map(map_pais).fillna(df_ext_copy.get('Pais', 'Exterior'))
+                all_mundi_rows = ws_mundi.get_all_values()
+                data_rows = all_mundi_rows[1:] if len(all_mundi_rows) > 1 else []
 
-                tot_ext_col = 'Total_Validos' if 'Total_Validos' in df_ext_copy.columns else 'Total'
+                df_ext_copy = df_exterior.copy()
+                df_ext_copy.columns = [str(c).replace('\ufeff', '').strip() for c in df_ext_copy.columns]
+
+                tot_ext_col = 'Total_Validos' if 'Total_Validos' in df_ext_copy.columns else ('Total' if 'Total' in df_ext_copy.columns else 'total')
+                for col in ['Lula', 'Flávio Bolsonaro', tot_ext_col, 'Urnas_Total', 'Eleitores_Aptos', 'Comparecimento', 'Abstencao', 'Brancos', 'Nulos']:
+                    if col in df_ext_copy.columns:
+                        df_ext_copy[col] = pd.to_numeric(df_ext_copy[col], errors='coerce').fillna(0)
+
+                if 'Urnas_Apuradas' in df_ext_copy.columns:
+                    def _parse_urnas_ap(val, total_u):
+                        try:
+                            s = str(val).replace('%', '').replace(',', '.').strip()
+                            f = float(s)
+                            if f <= 100.0 and total_u > 0:
+                                return round(total_u * (f / 100.0))
+                            return round(f)
+                        except Exception:
+                            return 0
+                    df_ext_copy['Secoes_Apuradas_calc'] = [
+                        _parse_urnas_ap(r.get('Urnas_Apuradas', 0), r.get('Urnas_Total', 0))
+                        for _, r in df_ext_copy.iterrows()
+                    ]
+                else:
+                    df_ext_copy['Secoes_Apuradas_calc'] = 0
+
+                df_dic_ext = carregar_dicionario_exterior()
+                if not df_dic_ext.empty:
+                    df_dic_ext.columns = [str(c).replace('\ufeff', '').strip() for c in df_dic_ext.columns]
+                    df_dic_ext['cod_tse'] = df_dic_ext['cod_tse'].astype(str).str.strip().str.zfill(5)
+                    map_pais = df_dic_ext.set_index('cod_tse')['Pais'].to_dict()
+                else:
+                    map_pais = {}
+
+                if 'cod_tse' in df_ext_copy.columns:
+                    df_ext_copy['cod_tse'] = df_ext_copy['cod_tse'].astype(str).str.strip().str.zfill(5)
+                    df_ext_copy['Pais'] = df_ext_copy['cod_tse'].map(map_pais).fillna(df_ext_copy.get('Pais', 'Exterior'))
+
+                ALIAS_PAISES_MUNDI = {
+                    'Holanda': 'Países Baixos',
+                    'República Checa': 'República Tcheca',
+                    'Polônia': 'Polónia',
+                    'Estônia': 'Estónia',
+                    'Eslovênia': 'Eslovénia',
+                    'Romênia': 'Roménia',
+                    'Quênia': 'Quénia',
+                    'Vietnã': 'Vietname',
+                    'Armênia': 'Arménia',
+                    'Irlanda': 'República da Irlanda',
+                    'Sérvia': 'República da Sérvia',
+                    'Benin': 'Benim',
+                    'Irã': 'Irão',
+                    'São Tomé e Príncipe': 'São Tomé and Principe',
+                    'Tanzânia': 'República Unida da Tanzânia'
+                }
+                df_ext_copy['Pais'] = df_ext_copy['Pais'].astype(str).str.strip().replace(ALIAS_PAISES_MUNDI)
+
                 agg_ext = {
                     'Lula': 'sum',
                     'Flávio Bolsonaro': 'sum',
-                    tot_ext_col: 'sum'
+                    tot_ext_col: 'sum',
+                    'Secoes_Apuradas_calc': 'sum'
                 }
                 if 'Urnas_Total' in df_ext_copy.columns:
                     agg_ext['Urnas_Total'] = 'sum'
-                if 'Urnas_Apuradas' in df_ext_copy.columns:
-                    agg_ext['Urnas_Apuradas'] = 'sum'
 
                 paises_agg = df_ext_copy.groupby('Pais').agg(agg_ext).to_dict(orient='index')
-                paises_votantes = set(df_dic_ext['Pais'].dropna().str.strip())
+
+                def _parse_num(val):
+                    if not val: return 0.0
+                    try:
+                        return float(str(val).replace('.', '').replace(',', '.').strip())
+                    except Exception:
+                        return 0.0
+
+                def _parse_pct(val):
+                    if not val: return 0.0
+                    try:
+                        return float(str(val).replace('%', '').replace(',', '.').strip())
+                    except Exception:
+                        return 0.0
+
                 payload_mundi = []
-                for p_nome in mundi_paises:
-                    p_clean = str(p_nome).strip()
-                    if p_clean not in paises_votantes:
-                        payload_mundi.append(['', '', '', '', '', '', ''])
-                    else:
-                        d_p = paises_agg.get(p_clean, {})
-                        l2 = d_p.get('Lula', 0)
-                        b2 = d_p.get('Flávio Bolsonaro', 0)
-                        t2 = d_p.get(tot_ext_col, l2 + b2)
-                        l_pct = (l2 / t2 * 100) if t2 > 0 else 0.0
-                        b_pct = (b2 / t2 * 100) if t2 > 0 else 0.0
-                        diff_pct = (l_pct - b_pct) if t2 > 0 else 0.0
-                        u_tot = d_p.get('Urnas_Total', 0)
-                        u_ap = d_p.get('Urnas_Apuradas', 0)
+                for row in data_rows:
+                    p_nome = row[1].strip() if len(row) > 1 else ''
+                    l1 = _parse_num(row[2]) if len(row) > 2 else 0.0
+                    b1 = _parse_num(row[3]) if len(row) > 3 else 0.0
+                    l1_pct = _parse_pct(row[5]) if len(row) > 5 else 0.0
+                    b1_pct = _parse_pct(row[6]) if len(row) > 6 else 0.0
+
+                    existing_k_to_u = row[10:21] if len(row) >= 21 else (row[10:] + [''] * (21 - len(row)))
+                    existing_t2 = _parse_num(existing_k_to_u[2]) if len(existing_k_to_u) > 2 else 0.0
+
+                    d_p = paises_agg.get(p_nome)
+                    if not d_p and p_nome in ALIAS_PAISES_MUNDI.values():
+                        for orig, alias in ALIAS_PAISES_MUNDI.items():
+                            if alias == p_nome and orig in paises_agg:
+                                d_p = paises_agg[orig]
+                                break
+
+                    l2 = int(round(d_p.get('Lula', 0))) if d_p else 0
+                    b2 = int(round(d_p.get('Flávio Bolsonaro', 0))) if d_p else 0
+                    t2 = int(round(d_p.get(tot_ext_col, l2 + b2))) if d_p else 0
+
+                    # Regra de Não-Regressão
+                    if t2 == 0 and existing_t2 > 0:
+                        k_u = list(existing_k_to_u)
+                        while len(k_u) < 11:
+                            k_u.append('')
+                        payload_mundi.append(k_u[:11])
+                        continue
+
+                    if t2 > 0:
+                        l_pct = (l2 / t2 * 100)
+                        b_pct = (b2 / t2 * 100)
+                        diff_pct = (l_pct - b_pct) / 100.0
+
+                        u_tot = int(round(d_p.get('Urnas_Total', 0)))
+                        u_ap = int(round(d_p.get('Secoes_Apuradas_calc', 0)))
                         u_pct = (u_ap / u_tot * 100) if u_tot > 0 else 0.0
+
+                        dif_l_abs = l2 - l1
+                        dif_b_abs = b2 - b1
+                        dif_l_pct = l_pct - l1_pct
+                        dif_b_pct = b_pct - b1_pct
+
                         payload_mundi.append([
-                            str(l2), str(b2), str(t2),
+                            str(l2),
+                            str(b2),
+                            str(t2),
                             f"{l_pct:.2f}%".replace('.', ','),
                             f"{b_pct:.2f}%".replace('.', ','),
                             f"{diff_pct:.2f}".replace('.', ','),
-                            f"{u_pct:.2f}%".replace('.', ',')
+                            f"{u_pct:.2f}%".replace('.', ','),
+                            str(int(round(dif_l_abs))),
+                            str(int(round(dif_b_abs))),
+                            f"{dif_l_pct:.2f}%".replace('.', ','),
+                            f"{dif_b_pct:.2f}%".replace('.', ',')
                         ])
+                    else:
+                        if l1 > 0 or b1 > 0:
+                            dif_l_pct = 0.0 - l1_pct
+                            dif_b_pct = 0.0 - b1_pct
+                            payload_mundi.append([
+                                "", "", "0", "", "", "", "0,00%",
+                                "", "",
+                                f"{dif_l_pct:.2f}%".replace('.', ','),
+                                f"{dif_b_pct:.2f}%".replace('.', ',')
+                            ])
+                        else:
+                            payload_mundi.append(["", "", "0", "", "", "", "0,00%", "", "", "0,00%", "0,00%"])
+
                 if payload_mundi:
-                    ws_mundi.update(range_name=f'K2:Q{len(payload_mundi)+1}', values=payload_mundi, value_input_option='USER_ENTERED')
+                    ws_mundi.update(range_name=f'K2:U{len(payload_mundi)+1}', values=payload_mundi, value_input_option='USER_ENTERED')
                     total_linhas_atualizadas += len(payload_mundi)
             except Exception as e_mundi:
                 adicionar_log(f"Aviso sync Mapa mundi: {e_mundi}", "aviso")

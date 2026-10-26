@@ -1655,7 +1655,7 @@
         // Inicialização do Mapa Leaflet com Canvas GPU
         // Renderer Canvas com buffer de 50% para pan suave sem redesenhar
         const canvasRenderer = L.canvas({
-            padding: 0.5,
+            padding: 0.1,
             tolerance: 4
         });
 
@@ -1717,7 +1717,6 @@
             mapEl.className = mapEl.className.replace(/\bzoom-\d+\b/g, '').trim();
             mapEl.classList.add(`zoom-${z}`);
         }
-        map.on('zoom', updateZoomClasses);
         map.on('zoomend', updateZoomClasses);
         updateZoomClasses();
 
@@ -1790,8 +1789,12 @@
                 flavioPct = d[6];
             }
 
+            const corCalc = getColor(lulaPct, flavioPct, total);
+            if (typeof layerColorCache !== 'undefined') {
+                layerColorCache.set(ibge, corCalc);
+            }
             return {
-                fillColor: getColor(lulaPct, flavioPct, total),
+                fillColor: corCalc,
                 weight: 0.75,
                 opacity: 0.85,
                 color: '#94a3b8',
@@ -1882,15 +1885,21 @@
             highlightLayer.clearLayers();
         };
 
+        let moveRaf = null;
         map.on('move', () => {
             if (window.innerWidth <= 768) return;
             if (selectedLatLng && !tooltip.classList.contains('hidden')) {
-                const pt = map.latLngToContainerPoint(selectedLatLng);
-                const cardW = 280;
-                const clampedX = Math.max(cardW / 2 + 10, Math.min(window.innerWidth - cardW / 2 - 10, pt.x));
-                const clampedY = Math.max(10, Math.min(window.innerHeight - 200, pt.y - 15));
-                tooltip.style.left = clampedX + 'px';
-                tooltip.style.top = clampedY + 'px';
+                if (!moveRaf) {
+                    moveRaf = requestAnimationFrame(() => {
+                        moveRaf = null;
+                        const pt = map.latLngToContainerPoint(selectedLatLng);
+                        const cardW = 280;
+                        const clampedX = Math.max(cardW / 2 + 10, Math.min(window.innerWidth - cardW / 2 - 10, pt.x));
+                        const clampedY = Math.max(10, Math.min(window.innerHeight - 200, pt.y - 15));
+                        tooltip.style.left = clampedX + 'px';
+                        tooltip.style.top = clampedY + 'px';
+                    });
+                }
             }
         });
 
@@ -1973,12 +1982,16 @@
 
                         // Hover apenas para desktop com mouse (touch não tem hover e economiza processamento)
                         if (!isTouchDevice) {
+                            let currentHoverIbge = null;
                             events.mouseover = function(e) {
+                                if (currentHoverIbge === ibge) return;
+                                currentHoverIbge = ibge;
                                 sharedHoverTooltip.setContent(nome).setLatLng(e.latlng).openOn(map);
                                 highlightLayer.clearLayers();
                                 highlightLayer.addData(feature);
                             };
                             events.mouseout = function() {
+                                currentHoverIbge = null;
                                 map.closeTooltip(sharedHoverTooltip);
                                 // Mantém destaque apenas se for o município selecionado
                                 if (!selectedLatLng) {
@@ -2084,14 +2097,39 @@
             if (legUrnas) legUrnas.innerText = urnasVal;
         }
 
-        // Polling em Tempo Real a cada 30 segundos
+        // Cache de cores dos municípios para evitar redesenho desnecessário dos 5.564 polígonos
+        const layerColorCache = new Map();
+        let lastSyncVersion = null;
+
+        // Polling em Tempo Real a cada 30 segundos ultra-otimizado
         setInterval(async () => {
             try {
                 const resDados = await fetch('apuracao_brasil_tempo_real.json?t=' + Date.now());
-                apuracaoDados = await resDados.json();
+                const novosDados = await resDados.json();
+
+                // Verifica se houve qualquer alteração real nos dados antes de reprocessar
+                const versaoAtual = novosDados.nacional ? (novosDados.nacional.atualizado_em + '_' + novosDados.nacional.total) : '';
+                if (versaoAtual && versaoAtual === lastSyncVersion) {
+                    return; // Dados 100% idênticos, nada a redesenhar! Mantém 60fps constante
+                }
+                lastSyncVersion = versaoAtual;
+                apuracaoDados = novosDados;
                 atualizarPlacarNacional();
-                if (geoLayer) {
-                    geoLayer.setStyle(styleFeature);
+
+                // Atualização cirúrgica: altera estilo apenas dos municípios cuja cor realmente mudou
+                if (geoLayer && apuracaoDados && apuracaoDados.municipios) {
+                    const muns = apuracaoDados.municipios;
+                    for (const ibge in muns) {
+                        const d = muns[ibge];
+                        const novaCor = getColor(d[5], d[6], d[4]);
+                        if (layerColorCache.get(ibge) !== novaCor) {
+                            layerColorCache.set(ibge, novaCor);
+                            const l = layerByIbge[ibge];
+                            if (l && l.setStyle) {
+                                l.setStyle({ fillColor: novaCor });
+                            }
+                        }
+                    }
                 }
             } catch (e) {
                 console.warn('Erro na sincronização:', e);
@@ -2241,13 +2279,19 @@
                 }
             }, { passive: true });
 
+            let touchPanRaf = null;
             urnasPillEl.addEventListener('touchmove', (e) => {
                 if (e.touches.length === 1) {
                     const dx = e.touches[0].clientX - startX;
                     const dy = e.touches[0].clientY - startY;
                     if (Math.abs(dx) > 4 || Math.abs(dy) > 4) {
                         isDragging = true;
-                        map.panBy([-dx, -dy], { animate: false });
+                        if (!touchPanRaf) {
+                            touchPanRaf = requestAnimationFrame(() => {
+                                touchPanRaf = null;
+                                map.panBy([-dx, -dy], { animate: false });
+                            });
+                        }
                         startX = e.touches[0].clientX;
                         startY = e.touches[0].clientY;
                     }
