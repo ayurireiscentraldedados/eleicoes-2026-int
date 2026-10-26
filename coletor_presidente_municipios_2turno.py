@@ -147,6 +147,16 @@ def coletar_municipios_brasil(max_workers=20):
     def fetch_item(row):
         ibge_str = str(row['cod_ibge7']).strip()
         antigo = MEMORIA_MUNICIPIOS.get(ibge_str)
+        # Otimização: se já apurado 100% com todas as seções totalizadas, preserva imediatamente
+        if antigo:
+            try:
+                u_str = str(antigo.get('Urnas_Pct', '')).replace('%', '').replace(',', '.').strip()
+                s_tot = int(antigo.get('Seções_Total', 0))
+                s_ap = int(antigo.get('Seções_Totalizadas', 0))
+                if float(u_str) >= 100.0 and s_tot > 0 and s_ap >= s_tot:
+                    return antigo
+            except Exception:
+                pass
         sigla = str(row['UF_sigla']).lower()
         cd_tse = str(row['cod_mun']).zfill(5)
         url = f"https://resultados.tse.jus.br/oficial/ele2026/{ELEICAO_ID}/dados/{sigla}/{sigla}{cd_tse}-{CARGO_ID}-e00{ELEICAO_ID}-u.json"
