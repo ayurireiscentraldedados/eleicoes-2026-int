@@ -119,7 +119,7 @@ def carregar_memoria_inicial():
             except Exception as e:
                 pass
 
-def coletar_municipios_brasil(max_workers=40):
+def coletar_municipios_brasil(max_workers=20):
     """
     Executa a coleta concorrente de todos os 5.571 municípios do Brasil para Presidente no 2º Turno.
     Extrai votos válidos, brancos, nulos, abstenções, comparecimento e urnas apuradas.
@@ -151,9 +151,21 @@ def coletar_municipios_brasil(max_workers=40):
         cd_tse = str(row['cod_mun']).zfill(5)
         url = f"https://resultados.tse.jus.br/oficial/ele2026/{ELEICAO_ID}/dados/{sigla}/{sigla}{cd_tse}-{CARGO_ID}-e00{ELEICAO_ID}-u.json"
         
+        for attempt in range(4):
+            try:
+                r = session.get(url, verify=False, timeout=8)
+                if r.status_code == 200:
+                    break
+                elif r.status_code == 429:
+                    time.sleep(1.0 * (attempt + 1))
+                    continue
+                else:
+                    time.sleep(0.3)
+            except Exception:
+                time.sleep(0.5)
+
         try:
-            r = session.get(url, verify=False, timeout=8)
-            if r.status_code == 200:
+            if 'r' in locals() and r is not None and r.status_code == 200:
                 d = r.json()
                 lula = 0
                 flavio = 0
@@ -309,7 +321,7 @@ def coletar_municipios_brasil(max_workers=40):
     
     return df
 
-def rodar_loop(intervalo_segundos=60, workers=40):
+def rodar_loop(intervalo_segundos=60, workers=20):
     print("=" * 70)
     print("COLETOR PRESIDENCIAL MUNICIPAL - MODO CONT?NUO (TEMPO REAL)")
     print(f"Intervalo entre ciclos: {intervalo_segundos} segundos | Workers: {workers}")
