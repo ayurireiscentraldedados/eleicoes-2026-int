@@ -256,7 +256,34 @@ def coletar_exterior_completo(max_workers=20):
 
     return df
 
+def rodar_loop(intervalo_segundos=60, workers=20):
+    print("=" * 70)
+    print("COLETOR PRESIDENCIAL EXTERIOR (ZZ) - MODO CONTÍNUO (TEMPO REAL)")
+    print(f"Intervalo entre ciclos: {intervalo_segundos} segundos | Workers: {workers}")
+    print("=" * 70)
+    ciclo = 1
+    while True:
+        hora_atual = datetime.now().strftime('%H:%M:%S')
+        print(f"\n[{hora_atual}] >>> CICLO DE COLETA EXTERIOR #{ciclo} <<<")
+        try:
+            coletar_exterior_completo(max_workers=workers)
+        except Exception as e:
+            print(f"[ERRO] Falha na coleta exterior #{ciclo}: {e}")
+        print(f"Aguardando {intervalo_segundos}s para o próximo ciclo de coleta exterior...")
+        ciclo += 1
+        time.sleep(intervalo_segundos)
+
 if __name__ == "__main__":
-    df_resultado = coletar_exterior_completo(max_workers=20)
-    print("\nTop 10 Maiores Colégios Eleitorais no Exterior:")
-    print(df_resultado[['Cidade', 'Pais', 'Eleitores_Aptos', 'Urnas_Total', 'Lula', 'Flávio Bolsonaro', 'Vencedor']].head(10).to_string(index=False))
+    import argparse
+    parser = argparse.ArgumentParser(description="Coletor Exterior 2º Turno (ZZ)")
+    parser.add_argument("--once", action="store_true", help="Executa apenas uma varredura")
+    parser.add_argument("--intervalo", type=int, default=60, help="Intervalo em segundos entre ciclos (padrão: 60)")
+    parser.add_argument("--workers", type=int, default=20, help="Número de conexões simultâneas (padrão: 20)")
+    args = parser.parse_args()
+
+    if args.once:
+        df_resultado = coletar_exterior_completo(max_workers=args.workers)
+        print("\nTop 10 Maiores Colégios Eleitorais no Exterior:")
+        print(df_resultado[['Cidade', 'Pais', 'Eleitores_Aptos', 'Urnas_Total', 'Lula', 'Flávio Bolsonaro', 'Vencedor']].head(10).to_string(index=False))
+    else:
+        rodar_loop(intervalo_segundos=args.intervalo, workers=args.workers)

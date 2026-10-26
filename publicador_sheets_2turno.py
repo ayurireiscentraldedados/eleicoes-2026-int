@@ -19,7 +19,8 @@ for p in [BASE_DIR, PARENT_DIR]:
     if p not in sys.path:
         sys.path.insert(0, p)
 
-from servidor_remoto_2turno import sincronizar_google_sheets
+import importlib
+import servidor_remoto_2turno
 
 def publicar_recortes_2turno():
     print('=' * 65)
@@ -68,7 +69,11 @@ def publicar_recortes_2turno():
         print('[ERRO] Nenhum arquivo CSV de resultado encontrado para publicar.')
         return False
 
-    sucesso = sincronizar_google_sheets(df_brasil=df_br, df_exterior=df_ext)
+        try:
+        importlib.reload(servidor_remoto_2turno)
+    except Exception:
+        pass
+    sucesso = servidor_remoto_2turno.sincronizar_google_sheets(df_brasil=df_br, df_exterior=df_ext)
     if sucesso:
         print('\n? Publica??o no Google Sheets conclu?da com 100% de sucesso!')
     else:
