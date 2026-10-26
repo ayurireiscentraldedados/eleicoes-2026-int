@@ -69,7 +69,7 @@ def publicar_recortes_2turno():
         print('[ERRO] Nenhum arquivo CSV de resultado encontrado para publicar.')
         return False
 
-        try:
+    try:
         importlib.reload(servidor_remoto_2turno)
     except Exception:
         pass
