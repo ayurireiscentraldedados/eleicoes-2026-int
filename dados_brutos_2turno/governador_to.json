@@ -2,5 +2,73 @@
     "success": true,
     "title": "Dados retornados com sucesso",
     "message": "sucesso",
-    "data": null
+    "data": {
+        "url": "https://resultados.tse.jus.br/oficial/ele2026/6260/dados/to/to-c0003-e006260-u.json",
+        "state": "to",
+        "number_votes": "953385",
+        "status": "success",
+        "position": "Governador",
+        "last_modified": "25/10/2026 21:44:50",
+        "last_internal_atualization": "26/10/2026 01:29:13",
+        "ballot_boxes": "100,00",
+        "candidates": [
+            {
+                "name": "VICENTINHO JÚNIOR",
+                "place": 1,
+                "number": "45",
+                "party": "PSDB",
+                "situation_candidate": "Válido",
+                "situation": "Eleito",
+                "valid_votes": "562083",
+                "percentage_valid_votes": "64,52",
+                "unic_number": "270002544544",
+                "photo": "https://opovo.com.br/DS/public/images/ele2026/FTO270002544544_div.jpg"
+            },
+            {
+                "name": "PROFESSORA DORINHA",
+                "place": 2,
+                "number": "44",
+                "party": "UNIÃO",
+                "situation_candidate": "Válido",
+                "situation": "Não eleito",
+                "valid_votes": "309076",
+                "percentage_valid_votes": "35,48",
+                "unic_number": "270002544599",
+                "photo": "https://opovo.com.br/DS/public/images/ele2026/FTO270002544599_div.jpg"
+            },
+            {
+                "name": "Nulo",
+                "place": null,
+                "number": null,
+                "party": null,
+                "situation": null,
+                "valid_votes": "61903",
+                "percentage_valid_votes": "6,49",
+                "unic_number": null,
+                "photo": null
+            },
+            {
+                "name": "Branco",
+                "place": null,
+                "number": null,
+                "party": null,
+                "situation": null,
+                "valid_votes": "20323",
+                "percentage_valid_votes": "2,13",
+                "unic_number": null,
+                "photo": null
+            },
+            {
+                "name": "Abstenções",
+                "place": null,
+                "number": null,
+                "party": null,
+                "situation": null,
+                "valid_votes": "227081",
+                "percentage_valid_votes": "19,24",
+                "unic_number": null,
+                "photo": null
+            }
+        ]
+    }
 }

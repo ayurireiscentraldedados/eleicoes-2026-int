@@ -2,5 +2,73 @@
     "success": true,
     "title": "Dados retornados com sucesso",
     "message": "sucesso",
-    "data": null
+    "data": {
+        "url": "https://resultados.tse.jus.br/oficial/ele2026/6260/dados/rn/rn-c0003-e006260-u.json",
+        "state": "rn",
+        "number_votes": "2229510",
+        "status": "success",
+        "position": "Governador",
+        "last_modified": "25/10/2026 21:24:24",
+        "last_internal_atualization": "26/10/2026 01:29:13",
+        "ballot_boxes": "100,00",
+        "candidates": [
+            {
+                "name": "CADU DE LULA",
+                "place": 1,
+                "number": "13",
+                "party": "PT",
+                "situation_candidate": "Válido",
+                "situation": "Eleito",
+                "valid_votes": "1073024",
+                "percentage_valid_votes": "50,77",
+                "unic_number": "200002534001",
+                "photo": "https://opovo.com.br/DS/public/images/ele2026/FRN200002534001_div.jpg"
+            },
+            {
+                "name": "ALLYSON",
+                "place": 2,
+                "number": "44",
+                "party": "UNIÃO",
+                "situation_candidate": "Válido",
+                "situation": "Não eleito",
+                "valid_votes": "1040399",
+                "percentage_valid_votes": "49,23",
+                "unic_number": "200002535255",
+                "photo": "https://opovo.com.br/DS/public/images/ele2026/FRN200002535255_div.jpg"
+            },
+            {
+                "name": "Nulo",
+                "place": null,
+                "number": null,
+                "party": null,
+                "situation": null,
+                "valid_votes": "80214",
+                "percentage_valid_votes": "3,60",
+                "unic_number": null,
+                "photo": null
+            },
+            {
+                "name": "Branco",
+                "place": null,
+                "number": null,
+                "party": null,
+                "situation": null,
+                "valid_votes": "35873",
+                "percentage_valid_votes": "1,61",
+                "unic_number": null,
+                "photo": null
+            },
+            {
+                "name": "Abstenções",
+                "place": null,
+                "number": null,
+                "party": null,
+                "situation": null,
+                "valid_votes": "426776",
+                "percentage_valid_votes": "16,07",
+                "unic_number": null,
+                "photo": null
+            }
+        ]
+    }
 }

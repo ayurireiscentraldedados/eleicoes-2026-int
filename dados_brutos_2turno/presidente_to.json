@@ -5,36 +5,36 @@
     "data": {
         "url": "https://resultados.tse.jus.br/oficial/ele2026/6258/dados/to/to-c0001-e006258-u.json",
         "state": "to",
-        "number_votes": "0",
+        "number_votes": "954763",
         "status": "success",
         "position": "Presidente",
-        "last_modified": " ",
-        "last_internal_atualization": "13/10/2026 11:25:32",
-        "ballot_boxes": "0,00",
+        "last_modified": "25/10/2026 21:30:35",
+        "last_internal_atualization": "26/10/2026 01:29:22",
+        "ballot_boxes": "100,00",
         "candidates": [
-            {
-                "name": "LULA",
-                "place": 1,
-                "number": "13",
-                "party": "PT",
-                "situation_candidate": null,
-                "situation": null,
-                "valid_votes": "0",
-                "percentage_valid_votes": "0,00",
-                "unic_number": "280002542548",
-                "photo": "https://opovo.com.br/DS/public/images/ele2026/FBR280002542548_div.jpg"
-            },
             {
                 "name": "FLAVIO BOLSONARO",
                 "place": 2,
                 "number": "22",
                 "party": "PL",
-                "situation_candidate": null,
+                "situation_candidate": "Válido",
                 "situation": null,
-                "valid_votes": "0",
-                "percentage_valid_votes": "0,00",
+                "valid_votes": "467916",
+                "percentage_valid_votes": "51,37",
                 "unic_number": "280002551544",
                 "photo": "https://opovo.com.br/DS/public/images/ele2026/FBR280002551544_div.jpg"
+            },
+            {
+                "name": "LULA",
+                "place": 1,
+                "number": "13",
+                "party": "PT",
+                "situation_candidate": "Válido",
+                "situation": null,
+                "valid_votes": "442962",
+                "percentage_valid_votes": "48,63",
+                "unic_number": "280002542548",
+                "photo": "https://opovo.com.br/DS/public/images/ele2026/FBR280002542548_div.jpg"
             },
             {
                 "name": "Nulo",
@@ -42,8 +42,8 @@
                 "number": null,
                 "party": null,
                 "situation": null,
-                "valid_votes": "0",
-                "percentage_valid_votes": "0,00",
+                "valid_votes": "35826",
+                "percentage_valid_votes": "3,75",
                 "unic_number": null,
                 "photo": null
             },
@@ -53,8 +53,8 @@
                 "number": null,
                 "party": null,
                 "situation": null,
-                "valid_votes": "0",
-                "percentage_valid_votes": "0,00",
+                "valid_votes": "8059",
+                "percentage_valid_votes": "0,84",
                 "unic_number": null,
                 "photo": null
             },
@@ -64,8 +64,8 @@
                 "number": null,
                 "party": null,
                 "situation": null,
-                "valid_votes": "0",
-                "percentage_valid_votes": "0,00",
+                "valid_votes": "227278",
+                "percentage_valid_votes": "19,23",
                 "unic_number": null,
                 "photo": null
             }
